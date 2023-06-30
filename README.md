@@ -51,7 +51,6 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
   list        Brief
-  test        A brief description of your command
 
 Flags:
   -c, --config string      config file (default is $HOME/.az-pim-cli.yaml)
