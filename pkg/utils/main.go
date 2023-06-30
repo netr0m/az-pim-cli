@@ -31,3 +31,41 @@ func PrintEligibleRoles(eligibleRoleAssignments *pim.RoleAssignmentResponse) {
 	}
 }
 
+func GetRoleAssignment(name interface{}, prefix interface{}, role interface{}, eligibleRoleAssignments *pim.RoleAssignmentResponse) *pim.RoleAssignment {
+	if name == nil && prefix == nil {
+		log.Fatalf("getSubscriptionId() requires either 'name' or 'prefix' as its input parameter")
+	}
+	for _, eligibleRoleAssignment := range eligibleRoleAssignments.Value {
+		var match *pim.RoleAssignment = nil
+		subscriptionName := strings.ToLower(eligibleRoleAssignment.RoleDefinition.Resource.DisplayName)
+
+		if prefix, exists := prefix.(string); exists {
+			prefix = strings.ToLower(prefix)
+			if strings.HasPrefix(subscriptionName, prefix) {
+				match = &eligibleRoleAssignment
+			}
+		} else if name, exists := name.(string); exists {
+			name = strings.ToLower(name)
+			if subscriptionName == name {
+				match = &eligibleRoleAssignment
+			}
+		}
+
+		if match != nil {
+			if role == nil {
+				return &eligibleRoleAssignment
+			}
+			if role, exists := role.(string); exists {
+				role = strings.ToLower(role)
+				if strings.Contains(eligibleRoleAssignment.RoleDefinition.DisplayName, role) {
+					return &eligibleRoleAssignment
+				}
+			}
+		}
+
+	}
+
+	log.Fatalln("Unable to find a role assignment matching the parameters.")
+
+	return nil
+}

@@ -14,3 +14,9 @@ const AZ_AUTHORITY string = "https://login.microsoftonline.com/"
 
 // Scope used for Azure authentication (Azure PIM AppId)
 const AZ_PIM_SCOPE string = "01fc33a7-78ba-4d2f-a4b7-768e336e890e/.default"
+
+// Default reason for role activation
+const DEFAULT_REASON string = "config"
+
+// Default duration for role activation
+const DEFAULT_DURATION_MINUTES int = 480

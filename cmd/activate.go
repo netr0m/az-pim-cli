@@ -1,40 +1,47 @@
 /*
 Copyright © 2023 netr0m <netr0m@pm.me>
-
 */
 package cmd
 
 import (
-	"fmt"
+	"log"
 
+	"github.com/netr0m/az-pim-cli/pkg/pim"
+	"github.com/netr0m/az-pim-cli/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
-// activateCmd represents the activate command
-var activateCmd = &cobra.Command{
-	Use:   "activate",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+var subscriptionName string
+var subscriptionPrefix string
+var roleName string
+var duration int
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+const resourceType string = "azureResources"
+
+var activateCmd = &cobra.Command{
+	Use:     "activate",
+	Aliases: []string{"a", "ac", "act"},
+	Short:   "Sends a request to Azure PIM to activate the given role",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("activate called")
+		token := pim.GetPIMAccessToken(TenantId)
+		subjectId := pim.GetUserInfo(token).ObjectId
+
+		eligibleRoleAssignments := pim.GetEligibleRoleAssignments(subjectId, token, resourceType)
+		roleAssignment := utils.GetRoleAssignment(subscriptionName, subscriptionPrefix, roleName, eligibleRoleAssignments)
+
+		log.Printf("Activating role '%s' in subscription '%s'", roleAssignment.RoleDefinition.DisplayName, roleAssignment.RoleDefinition.Resource.DisplayName)
+		requestResponse := pim.RequestRoleAssignment(subjectId, roleAssignment.ResourceId, roleAssignment.RoleDefinitionId, roleAssignment.Id, duration, token, resourceType)
+		log.Printf("The role '%s' in '%s' is now %s", roleAssignment.RoleDefinition.DisplayName, roleAssignment.RoleDefinition.Resource.DisplayName, requestResponse.AssignmentState)
+		log.Printf("\tThe role expires at %s", requestResponse.Schedule.EndDateTime)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(activateCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// activateCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// activateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Flags
+	activateCmd.PersistentFlags().StringVarP(&subscriptionName, "subscription-name", "s", "", "The name of the subscription to activate")
+	activateCmd.PersistentFlags().StringVarP(&subscriptionPrefix, "subscription-prefix", "p", "", "The name prefix of the subscription to activate (e.g. 'S399'). Alternative to 'subscription-name'.")
+	activateCmd.PersistentFlags().StringVarP(&roleName, "role-name", "r", "", "Specify the role to activate, if multiple roles are found for a subscription (e.g. 'Owner' and 'Contributor')")
+	activateCmd.PersistentFlags().IntVarP(&duration, "duration", "d", pim.DEFAULT_DURATION_MINUTES, "Duration in minutes that the role should be activated for")
 }

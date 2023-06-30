@@ -123,8 +123,34 @@ func GetEligibleRoleAssignments(subjectId string, token string, resourceType str
 	return responseModel
 }
 
+func RequestRoleAssignment(subjectId string, subscriptionId string, roleDefinitionId string, roleAssignmentId string, duration int, token string, resourceType string) *RoleAssignmentRequestResponse {
+	responseModel := &RoleAssignmentRequestResponse{}
+	roleAssignmentSchedule := &RoleAssignmentSchedule{
+		Type:          "Once",
+		StartDateTime: nil,
+		EndDateTime:   nil,
+		Duration:      fmt.Sprintf("PT%dM", duration),
+	}
+	roleAssignmentRequest := &RoleAssignmentRequest{
+		RoleDefinitionId:               roleDefinitionId,
+		ResourceId:                     subscriptionId,
+		SubjectId:                      subjectId,
+		AssignmentState:                "Active",
+		Type:                           "UserAdd",
+		Reason:                         DEFAULT_REASON,
+		TicketNumber:                   "",
+		TicketSystem:                   "az-pim-cli",
+		Schedule:                       roleAssignmentSchedule,
+		LinkedEligibleRoleAssignmentId: roleAssignmentId,
+		ScopedResourceId:               "",
 	}
 
-	return eligibleRoles
-}
+	_ = Request(&PIMRequest{
+		Path:    fmt.Sprintf("%s/roleAssignmentRequests", resourceType),
+		Token:   token,
+		Method:  "POST",
+		Payload: roleAssignmentRequest,
+	}, responseModel)
 
+	return responseModel
+}

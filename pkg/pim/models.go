@@ -66,3 +66,53 @@ type RoleAssignment struct {
 type RoleAssignmentResponse struct {
 	Value []RoleAssignment `json:"value"`
 }
+
+type RoleAssignmentSchedule struct {
+	Type          string      `json:"type"`
+	StartDateTime interface{} `json:"startDateTime"`
+	EndDateTime   interface{} `json:"endDateTime"`
+	Duration      string      `json:"duration"`
+}
+
+type RoleAssignmentRequest struct {
+	RoleDefinitionId               string                  `json:"roleDefinitionId"`
+	ResourceId                     string                  `json:"resourceId"`
+	SubjectId                      string                  `json:"subjectId"`
+	AssignmentState                string                  `json:"assignmentState"`
+	Type                           string                  `json:"type"`
+	Reason                         string                  `json:"reason"`
+	TicketNumber                   string                  `json:"ticketNumber"`
+	TicketSystem                   string                  `json:"ticketSystem"`
+	Schedule                       *RoleAssignmentSchedule `json:"schedule"`
+	LinkedEligibleRoleAssignmentId string                  `json:"linkedEligibleRoleAssignmentId"`
+	ScopedResourceId               string                  `json:"scopedResourceId"`
+}
+
+type RoleAssignmentRequestStatus struct {
+	Status        string              `json:"status"`
+	SubStatus     string              `json:"subStatus"`
+	StatusDetails []map[string]string `json:"statusDetails"`
+}
+
+type RoleAssignmentRequestResponse struct {
+	Id                             string                       `json:"id"`
+	ResourceId                     string                       `json:"resourceId"`
+	RoleDefinitionId               string                       `json:"roleDefinitionId"`
+	SubjectId                      string                       `json:"subjectId"`
+	ScopedResourceId               string                       `json:"scopedResourceId"`
+	LinkedEligibleRoleAssignmentId string                       `json:"linkedEligibleRoleAssignmentId"`
+	Type                           string                       `json:"type"`
+	AssignmentState                string                       `json:"assignmentState"`
+	RequestedDateTime              string                       `json:"requestedDateTime"`
+	RoleAssignmentStartDateTime    string                       `json:"roleAssignmentStartDateTime"`
+	RoleAssignmentEndDateTime      string                       `json:"roleAssignmentEndDateTime"`
+	Reason                         string                       `json:"reason"`
+	TicketNumber                   string                       `json:"ticketNumber"`
+	TicketSystem                   string                       `json:"ticketSystem"`
+	Condition                      string                       `json:"condition"`
+	ConditionVersion               string                       `json:"conditionVersion"`
+	ConditionDescription           string                       `json:"conditionDescription"`
+	Status                         *RoleAssignmentRequestStatus `json:"status"`
+	Schedule                       *RoleAssignmentSchedule      `json:"schedule"`
+	Metadata                       map[string]interface{}       `json:"metadata"`
+}
