@@ -23,7 +23,7 @@ var activateCmd = &cobra.Command{
 	Aliases: []string{"a", "ac", "act"},
 	Short:   "Sends a request to Azure PIM to activate the given role",
 	Run: func(cmd *cobra.Command, args []string) {
-		token := pim.GetPIMAccessToken(TenantId)
+		token := pim.GetPIMAccessTokenAzureCLI()
 		subjectId := pim.GetUserInfo(token).ObjectId
 
 		eligibleRoleAssignments := pim.GetEligibleRoleAssignments(subjectId, token, resourceType)

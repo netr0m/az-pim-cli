@@ -17,12 +17,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GetPIMAccessToken(tenantId string) string {
-	credOpts := azidentity.InteractiveBrowserCredentialOptions{
-		TenantID: tenantId,
-	}
-
-	cred, err := azidentity.NewInteractiveBrowserCredential(&credOpts)
+func GetPIMAccessTokenAzureCLI() string {
+	cred, err := azidentity.NewAzureCLICredential(nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
