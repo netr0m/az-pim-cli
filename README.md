@@ -1,7 +1,7 @@
 # Azure PIM CLI
 *Azure Privileged Identity Management Command Line Interface*
 
-`az-pim-cli` eases the process of listing and activating Azure PIM roles by allowing activation via the command line. Authentication is handled with the `azure.identity` library by utilizing the `InteractiveBrowserCredential` method.
+`az-pim-cli` eases the process of listing and activating Azure PIM roles by allowing activation via the command line. Authentication is handled with the `azure.identity` library by utilizing the `AzureCLICredential` method.
 
 ## Install
 ### Install with `go install`
@@ -24,6 +24,9 @@ $ mv ./az-pim-cli /usr/local/bin
 
 ## Configuration
 In addition to supporting environment variables and command line arguments, the script also supports certain config parameters stored in a file. By default, the script will try to look for a YAML config file at `$HOME/.az-pim-cli.yaml`, but you may also override the config file to use by supplying the `--config` flag.
+
+### Prerequisites
+This tool depends on [`az-cli`](https://learn.microsoft.com/en-us/cli/azure/) for authentication. Please ensure that you've authenticated with your Azure tenant by running the command `az login`. A new browser window will open, asking you to authenticate. This should only be necessary to do once.
 
 ### YAML config file
 ```yml
