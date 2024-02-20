@@ -57,7 +57,7 @@ func GetRoleAssignment(name interface{}, prefix interface{}, role interface{}, e
 			}
 			if role, exists := role.(string); exists {
 				role = strings.ToLower(role)
-				if strings.Contains(eligibleRoleAssignment.RoleDefinition.DisplayName, role) {
+				if strings.Contains(strings.ToLower(eligibleRoleAssignment.RoleDefinition.DisplayName), role) {
 					return &eligibleRoleAssignment
 				}
 			}
