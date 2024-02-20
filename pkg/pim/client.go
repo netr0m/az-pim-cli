@@ -119,7 +119,7 @@ func GetEligibleRoleAssignments(subjectId string, token string, resourceType str
 	return responseModel
 }
 
-func RequestRoleAssignment(subjectId string, subscriptionId string, roleDefinitionId string, roleAssignmentId string, duration int, token string, resourceType string) *RoleAssignmentRequestResponse {
+func RequestRoleAssignment(subjectId string, subscriptionId string, roleDefinitionId string, roleAssignmentId string, duration int, token string, resourceType string, reason string) *RoleAssignmentRequestResponse {
 	responseModel := &RoleAssignmentRequestResponse{}
 	roleAssignmentSchedule := &RoleAssignmentSchedule{
 		Type:          "Once",
@@ -133,7 +133,7 @@ func RequestRoleAssignment(subjectId string, subscriptionId string, roleDefiniti
 		SubjectId:                      subjectId,
 		AssignmentState:                "Active",
 		Type:                           "UserAdd",
-		Reason:                         DEFAULT_REASON,
+		Reason:                         reason,
 		TicketNumber:                   "",
 		TicketSystem:                   "az-pim-cli",
 		Schedule:                       roleAssignmentSchedule,

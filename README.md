@@ -97,6 +97,7 @@ Aliases:
 Flags:
   -d, --duration int                 Duration in minutes that the role should be activated for (default 480)
   -h, --help                         help for activate
+      --reason string                Reason for the activation (default "config")
   -r, --role-name string             Specify the role to activate, if multiple roles are found for a subscription (e.g. 'Owner' and 'Contributor')
   -s, --subscription-name string     The name of the subscription to activate
   -p, --subscription-prefix string   The name prefix of the subscription to activate (e.g. 'S399'). Alternative to 'subscription-name'.
