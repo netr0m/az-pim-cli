@@ -15,6 +15,7 @@ var subscriptionName string
 var subscriptionPrefix string
 var roleName string
 var duration int
+var reason string
 
 const resourceType string = "azureResources"
 
@@ -29,8 +30,8 @@ var activateCmd = &cobra.Command{
 		eligibleRoleAssignments := pim.GetEligibleRoleAssignments(subjectId, token, resourceType)
 		roleAssignment := utils.GetRoleAssignment(subscriptionName, subscriptionPrefix, roleName, eligibleRoleAssignments)
 
-		log.Printf("Activating role '%s' in subscription '%s'", roleAssignment.RoleDefinition.DisplayName, roleAssignment.RoleDefinition.Resource.DisplayName)
-		requestResponse := pim.RequestRoleAssignment(subjectId, roleAssignment.ResourceId, roleAssignment.RoleDefinitionId, roleAssignment.Id, duration, token, resourceType)
+		log.Printf("Activating role '%s' in subscription '%s' with reason '%s'", roleAssignment.RoleDefinition.DisplayName, roleAssignment.RoleDefinition.Resource.DisplayName, reason)
+		requestResponse := pim.RequestRoleAssignment(subjectId, roleAssignment.ResourceId, roleAssignment.RoleDefinitionId, roleAssignment.Id, duration, token, resourceType, reason)
 		log.Printf("The role '%s' in '%s' is now %s", roleAssignment.RoleDefinition.DisplayName, roleAssignment.RoleDefinition.Resource.DisplayName, requestResponse.AssignmentState)
 		log.Printf("\tThe role expires at %s", requestResponse.Schedule.EndDateTime)
 	},
@@ -44,4 +45,5 @@ func init() {
 	activateCmd.PersistentFlags().StringVarP(&subscriptionPrefix, "subscription-prefix", "p", "", "The name prefix of the subscription to activate (e.g. 'S399'). Alternative to 'subscription-name'.")
 	activateCmd.PersistentFlags().StringVarP(&roleName, "role-name", "r", "", "Specify the role to activate, if multiple roles are found for a subscription (e.g. 'Owner' and 'Contributor')")
 	activateCmd.PersistentFlags().IntVarP(&duration, "duration", "d", pim.DEFAULT_DURATION_MINUTES, "Duration in minutes that the role should be activated for")
+	activateCmd.PersistentFlags().StringVar(&reason, "reason", pim.DEFAULT_REASON, "Reason for the activation")
 }
