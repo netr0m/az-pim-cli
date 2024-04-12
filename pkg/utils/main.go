@@ -11,12 +11,12 @@ import (
 	"github.com/netr0m/az-pim-cli/pkg/pim"
 )
 
-func PrintEligibleRoles(eligibleRoleAssignments *pim.RoleAssignmentResponse) {
+func PrintEligibleRoles(roleEligibilityScheduleInstances *pim.RoleAssignmentResponse) {
 	var eligibleRoles = make(map[string][]string)
 
-	for _, ras := range eligibleRoleAssignments.Value {
-		subscriptionName := ras.RoleDefinition.Resource.DisplayName
-		roleName := ras.RoleDefinition.DisplayName
+	for _, ras := range roleEligibilityScheduleInstances.Value {
+		subscriptionName := ras.Properties.ExpandedProperties.Scope.DisplayName
+		roleName := ras.Properties.ExpandedProperties.RoleDefinition.DisplayName
 		if _, ok := eligibleRoles[subscriptionName]; !ok {
 			eligibleRoles[subscriptionName] = []string{}
 		}

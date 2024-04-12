@@ -105,15 +105,14 @@ func Request(request *PIMRequest, responseModel any) any {
 	return responseModel
 }
 
-func GetEligibleRoleAssignments(subjectId string, token string, resourceType string) *RoleAssignmentResponse {
+func GetEligibleRoleAssignments(token string) *RoleAssignmentResponse {
 	var params = map[string]string{
-		"$expand": "linkedEligibleRoleAssignment,subject,scopedResource,roleDefinition($expand=resource)",
-		"$filter": fmt.Sprintf("(subject/id eq '%s') and (assignmentState eq 'Eligible')", subjectId),
-		"$count":  "true",
+		"api-version": AZ_PIM_API_VERSION,
+		"$filter":     "asTarget()",
 	}
 	responseModel := &RoleAssignmentResponse{}
 	_ = Request(&PIMRequest{
-		Path:   fmt.Sprintf("%s/roleAssignments", resourceType),
+		Path:   fmt.Sprintf("%s/roleEligibilityScheduleInstances", AZ_PIM_BASE_PATH),
 		Token:  token,
 		Method: "GET",
 		Params: params,
