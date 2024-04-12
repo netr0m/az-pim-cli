@@ -58,6 +58,9 @@ func Request(request *PIMRequest, responseModel any) any {
 		payload := new(bytes.Buffer)
 		json.NewEncoder(payload).Encode(request.Payload)
 		req, err = http.NewRequest(request.Method, url, payload)
+		if err != nil {
+			log.Fatalf("ERROR: %v", err)
+		}
 	} else {
 		// Prepare the request
 		req, err = http.NewRequest(request.Method, url, nil)
