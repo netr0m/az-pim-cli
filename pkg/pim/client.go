@@ -49,7 +49,7 @@ func GetUserInfo(token string) AzureUserInfo {
 }
 
 func Request(request *PIMRequest, responseModel any) any {
-	url := fmt.Sprintf("%s/%s/%s", AZ_PIM_BASE_URL, AZ_PIM_BASE_PATH, request.Path)
+	url := fmt.Sprintf("%s/%s", AZ_PIM_BASE_URL, request.Path)
 
 	// Prepare request body
 	var req *http.Request
