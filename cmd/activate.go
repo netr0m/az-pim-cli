@@ -17,8 +17,6 @@ var roleName string
 var duration int
 var reason string
 
-const resourceType string = "azureResources"
-
 var activateCmd = &cobra.Command{
 	Use:     "activate",
 	Aliases: []string{"a", "ac", "act"},
@@ -27,13 +25,18 @@ var activateCmd = &cobra.Command{
 		token := pim.GetPIMAccessTokenAzureCLI()
 		subjectId := pim.GetUserInfo(token).ObjectId
 
-		eligibleRoleAssignments := pim.GetEligibleRoleAssignments(subjectId, token, resourceType)
+		eligibleRoleAssignments := pim.GetEligibleRoleAssignments(token)
 		roleAssignment := utils.GetRoleAssignment(subscriptionName, subscriptionPrefix, roleName, eligibleRoleAssignments)
 
-		log.Printf("Activating role '%s' in subscription '%s' with reason '%s'", roleAssignment.RoleDefinition.DisplayName, roleAssignment.RoleDefinition.Resource.DisplayName, reason)
-		requestResponse := pim.RequestRoleAssignment(subjectId, roleAssignment.ResourceId, roleAssignment.RoleDefinitionId, roleAssignment.Id, duration, token, resourceType, reason)
-		log.Printf("The role '%s' in '%s' is now %s", roleAssignment.RoleDefinition.DisplayName, roleAssignment.RoleDefinition.Resource.DisplayName, requestResponse.AssignmentState)
-		log.Printf("\tThe role expires at %s", requestResponse.Schedule.EndDateTime)
+		log.Printf(
+			"Activating role '%s' in subscription '%s' with reason '%s'",
+			roleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName,
+			roleAssignment.Properties.ExpandedProperties.Scope.DisplayName,
+			reason,
+		)
+
+		requestResponse := pim.RequestRoleAssignment(subjectId, roleAssignment, duration, reason, token)
+		log.Printf("The role '%s' in '%s' is now %s", roleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName, roleAssignment.Properties.ExpandedProperties.Scope.DisplayName, requestResponse.Properties.Status)
 	},
 }
 

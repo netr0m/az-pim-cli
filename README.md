@@ -28,37 +28,24 @@ In addition to supporting environment variables and command line arguments, the 
 ### Prerequisites
 This tool depends on [`az-cli`](https://learn.microsoft.com/en-us/cli/azure/) for authentication. Please ensure that you've authenticated with your Azure tenant by running the command `az login`. A new browser window will open, asking you to authenticate. This should only be necessary to do once.
 
-### YAML config file
-```yml
-# $HOME/.az-pim-cli.yaml
-tenantId: 1234-abcd-5678-efgh-90ij
-```
-
-### Environment variables
-> Environment variables are prefixed with 'PIM_'
-```bash
-export PIM_TENANTID="1234-abcd-5678-efgh-90ij"
-```
-
 ## Usage
 ```bash
 $ az-pim-cli --help
 az-pim-cli is a utility that allows the user to list and activate eligible role assignments
-        from Azure Active Directory Privileged Identity Management (PIM) directly from the command line
+        from Azure Entra ID Privileged Identity Management (PIM) directly from the command line
 
 Usage:
   az-pim-cli [command]
 
 Available Commands:
-  activate    Brief
+  activate    Sends a request to Azure PIM to activate the given role
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
-  list        Brief
+  list        Query Azure PIM for eligible role assignments
 
 Flags:
   -c, --config string      config file (default is $HOME/.az-pim-cli.yaml)
   -h, --help               help for az-pim-cli
-  -t, --tenant-id string   The tenant ID of your Azure tenant
 
 Use "az-pim-cli [command] --help" for more information about a command.
 
@@ -80,7 +67,6 @@ Flags:
 
 Global Flags:
   -c, --config string      config file (default is $HOME/.az-pim-cli.yaml)
-  -t, --tenant-id string   The tenant ID of your Azure tenant
 ```
 
 ### Activate a role
@@ -104,7 +90,6 @@ Flags:
 
 Global Flags:
   -c, --config string      config file (default is $HOME/.az-pim-cli.yaml)
-  -t, --tenant-id string   The tenant ID of your Azure tenant
 ```
 
 ### Examples
@@ -123,7 +108,6 @@ $ az-pim-cli activate --subscription-prefix s398 --duration 60
 Opening in existing browser session.
 2023/06/30 14:27:04 Activating role 'Owner' in subscription 'S398-XXX'
 2023/06/30 14:27:11 The role 'Owner' in 'S398-XXX' is now Active
-2023/06/30 14:27:11     The role expires at 2023-06-30T13:27:08.6926537Z
 
 # Activate a specific role ('Owner') in a subscription with the prefix 's398'
 $ az-pim-cli activate -p s398 --role-name owner

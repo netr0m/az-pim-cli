@@ -11,12 +11,12 @@ import (
 	"github.com/netr0m/az-pim-cli/pkg/pim"
 )
 
-func PrintEligibleRoles(eligibleRoleAssignments *pim.RoleAssignmentResponse) {
+func PrintEligibleRoles(roleEligibilityScheduleInstances *pim.RoleAssignmentResponse) {
 	var eligibleRoles = make(map[string][]string)
 
-	for _, ras := range eligibleRoleAssignments.Value {
-		subscriptionName := ras.RoleDefinition.Resource.DisplayName
-		roleName := ras.RoleDefinition.DisplayName
+	for _, ras := range roleEligibilityScheduleInstances.Value {
+		subscriptionName := ras.Properties.ExpandedProperties.Scope.DisplayName
+		roleName := ras.Properties.ExpandedProperties.RoleDefinition.DisplayName
 		if _, ok := eligibleRoles[subscriptionName]; !ok {
 			eligibleRoles[subscriptionName] = []string{}
 		}
@@ -37,7 +37,7 @@ func GetRoleAssignment(name interface{}, prefix interface{}, role interface{}, e
 	}
 	for _, eligibleRoleAssignment := range eligibleRoleAssignments.Value {
 		var match *pim.RoleAssignment = nil
-		subscriptionName := strings.ToLower(eligibleRoleAssignment.RoleDefinition.Resource.DisplayName)
+		subscriptionName := strings.ToLower(eligibleRoleAssignment.Properties.ExpandedProperties.Scope.DisplayName)
 
 		if prefix, exists := prefix.(string); exists {
 			prefix = strings.ToLower(prefix)
@@ -57,7 +57,7 @@ func GetRoleAssignment(name interface{}, prefix interface{}, role interface{}, e
 			}
 			if role, exists := role.(string); exists {
 				role = strings.ToLower(role)
-				if strings.Contains(strings.ToLower(eligibleRoleAssignment.RoleDefinition.DisplayName), role) {
+				if strings.Contains(strings.ToLower(eligibleRoleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName), role) {
 					return &eligibleRoleAssignment
 				}
 			}

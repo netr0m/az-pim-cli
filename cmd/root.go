@@ -14,13 +14,12 @@ import (
 )
 
 var cfgFile string
-var TenantId string
 
 var rootCmd = &cobra.Command{
 	Use:   "az-pim-cli",
 	Short: "A utility to list and activate Azure AD PIM roles from the CLI",
 	Long: `az-pim-cli is a utility that allows the user to list and activate eligible role assignments
-	from Azure Active Directory Privileged Identity Management (PIM) directly from the command line`,
+	from Azure Entra ID Privileged Identity Management (PIM) directly from the command line`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -37,7 +36,6 @@ func init() {
 
 	// Global flags
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.az-pim-cli.yaml)")
-	rootCmd.PersistentFlags().StringVarP(&TenantId, "tenant-id", "t", "", "The tenant ID of your Azure tenant")
 }
 
 // initConfig reads in config file and ENV variables if set.
