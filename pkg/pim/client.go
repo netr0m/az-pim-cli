@@ -15,6 +15,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 func GetPIMAccessTokenAzureCLI() string {
@@ -121,32 +122,79 @@ func GetEligibleRoleAssignments(token string) *RoleAssignmentResponse {
 	return responseModel
 }
 
-func RequestRoleAssignment(subjectId string, subscriptionId string, roleDefinitionId string, roleAssignmentId string, duration int, token string, resourceType string, reason string) *RoleAssignmentRequestResponse {
-	responseModel := &RoleAssignmentRequestResponse{}
-	roleAssignmentSchedule := &RoleAssignmentSchedule{
-		Type:          "Once",
-		StartDateTime: nil,
-		EndDateTime:   nil,
-		Duration:      fmt.Sprintf("PT%dM", duration),
-	}
-	roleAssignmentRequest := &RoleAssignmentRequest{
-		RoleDefinitionId:               roleDefinitionId,
-		ResourceId:                     subscriptionId,
-		SubjectId:                      subjectId,
-		AssignmentState:                "Active",
-		Type:                           "UserAdd",
-		Reason:                         reason,
-		TicketNumber:                   "",
-		TicketSystem:                   "az-pim-cli",
-		Schedule:                       roleAssignmentSchedule,
-		LinkedEligibleRoleAssignmentId: roleAssignmentId,
-		ScopedResourceId:               "",
+func ValidateRoleAssignmentRequest(scope string, roleAssignmentRequest RoleAssignmentRequestRequest, token string) bool {
+	var params = map[string]string{
+		"api-version": AZ_PIM_API_VERSION,
 	}
 
+	roleAssignmentValidationRequest := roleAssignmentRequest
+	roleAssignmentValidationRequest.Properties.Justification = "validation only call"
+	roleAssignmentValidationRequest.Properties.TicketInfo.TicketNumber = "Evaluate Only"
+	roleAssignmentValidationRequest.Properties.TicketInfo.TicketSystem = "Evaluate Only"
+	roleAssignmentValidationRequest.Properties.IsValidationOnly = true
+
+	validationResponse := &RoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
-		Path:    fmt.Sprintf("%s/roleAssignmentRequests", resourceType),
+		Path: fmt.Sprintf(
+			"%s/%s/roleAssignmentScheduleRequests/%s/validate",
+			scope,
+			AZ_PIM_BASE_PATH,
+			uuid.NewString(),
+		),
 		Token:   token,
 		Method:  "POST",
+		Params:  params,
+		Payload: roleAssignmentValidationRequest,
+	}, validationResponse)
+
+	if validationResponse.Properties.Status != "Granted" {
+		log.Printf("ERROR: The role assignment validation failed with status '%s'", validationResponse.Properties.Status)
+		log.Fatalln(validationResponse)
+		return false
+	}
+
+	return true
+}
+
+func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, duration int, reason string, token string) *RoleAssignmentRequestResponse {
+	var params = map[string]string{
+		"api-version": AZ_PIM_API_VERSION,
+	}
+
+	roleAssignmentRequest := &RoleAssignmentRequestRequest{
+		Properties: RoleAssignmentRequestProperties{
+			PrincipalId:                     subjectId,
+			RoleDefinitionId:                roleAssignment.Properties.ExpandedProperties.RoleDefinition.Id,
+			RequestType:                     "SelfActivate",
+			LinkedRoleEligibilityScheduleId: roleAssignment.Properties.RoleEligibilityScheduleId,
+			Justification:                   reason,
+			ScheduleInfo: &ScheduleInfo{
+				StartDateTime: nil,
+				Expiration: &ScheduleInfoExpiration{
+					Type:     "AfterDuration",
+					Duration: fmt.Sprintf("PT%dM", duration),
+				},
+			},
+			TicketInfo:       &TicketInfo{TicketNumber: "", TicketSystem: "az-pim-cli"},
+			IsValidationOnly: false,
+			IsActivativation: true,
+		},
+	}
+	scope := roleAssignment.Properties.ExpandedProperties.Scope.Id[1:]
+
+	ValidateRoleAssignmentRequest(scope, *roleAssignmentRequest, token)
+
+	responseModel := &RoleAssignmentRequestResponse{}
+	_ = Request(&PIMRequest{
+		Path: fmt.Sprintf(
+			"%s/%s/roleAssignmentScheduleRequests/%s",
+			scope,
+			AZ_PIM_BASE_PATH,
+			uuid.NewString(),
+		),
+		Token:   token,
+		Method:  "PUT",
+		Params:  params,
 		Payload: roleAssignmentRequest,
 	}, responseModel)
 
