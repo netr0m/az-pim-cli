@@ -57,7 +57,7 @@ func Request(request *PIMRequest, responseModel any) any {
 	var err error
 	if request.Payload != nil {
 		payload := new(bytes.Buffer)
-		json.NewEncoder(payload).Encode(request.Payload)
+		json.NewEncoder(payload).Encode(request.Payload) //nolint:errcheck
 		req, err = http.NewRequest(request.Method, url, payload)
 		if err != nil {
 			log.Fatalf("ERROR: %v", err)
@@ -83,6 +83,7 @@ func Request(request *PIMRequest, responseModel any) any {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
+		defer res.Body.Close()
 		log.Fatalln(err)
 	}
 	defer res.Body.Close()
