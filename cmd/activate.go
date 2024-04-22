@@ -22,6 +22,9 @@ var activateCmd = &cobra.Command{
 	Aliases: []string{"a", "ac", "act"},
 	Short:   "Sends a request to Azure PIM to activate the given role",
 	Run: func(cmd *cobra.Command, args []string) {
+		if subscriptionName == "" && subscriptionPrefix == "" {
+			log.Fatalf("Missing required parameter: You must specify either 'subscription-name' or 'subscription-prefix'.")
+		}
 		token := pim.GetPIMAccessTokenAzureCLI()
 		subjectId := pim.GetUserInfo(token).ObjectId
 
