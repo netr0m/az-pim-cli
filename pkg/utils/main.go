@@ -31,20 +31,17 @@ func PrintEligibleRoles(roleEligibilityScheduleInstances *pim.RoleAssignmentResp
 	}
 }
 
-func GetRoleAssignment(name interface{}, prefix interface{}, role interface{}, eligibleRoleAssignments *pim.RoleAssignmentResponse) *pim.RoleAssignment {
-	if name == nil && prefix == nil {
-		log.Fatalf("getSubscriptionId() requires either 'name' or 'prefix' as its input parameter")
-	}
+func GetRoleAssignment(name string, prefix string, role string, eligibleRoleAssignments *pim.RoleAssignmentResponse) *pim.RoleAssignment {
 	for _, eligibleRoleAssignment := range eligibleRoleAssignments.Value {
 		var match *pim.RoleAssignment = nil
 		subscriptionName := strings.ToLower(eligibleRoleAssignment.Properties.ExpandedProperties.Scope.DisplayName)
 
-		if prefix, exists := prefix.(string); exists {
+		if len(prefix) != 0 {
 			prefix = strings.ToLower(prefix)
 			if strings.HasPrefix(subscriptionName, prefix) {
 				match = &eligibleRoleAssignment
 			}
-		} else if name, exists := name.(string); exists {
+		} else if len(name) != 0 {
 			name = strings.ToLower(name)
 			if subscriptionName == name {
 				match = &eligibleRoleAssignment
@@ -52,17 +49,14 @@ func GetRoleAssignment(name interface{}, prefix interface{}, role interface{}, e
 		}
 
 		if match != nil {
-			if role == nil {
+			if role == "" {
 				return &eligibleRoleAssignment
 			}
-			if role, exists := role.(string); exists {
-				role = strings.ToLower(role)
-				if strings.Contains(strings.ToLower(eligibleRoleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName), role) {
-					return &eligibleRoleAssignment
-				}
+			role = strings.ToLower(role)
+			if strings.Contains(strings.ToLower(eligibleRoleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName), role) {
+				return &eligibleRoleAssignment
 			}
 		}
-
 	}
 
 	log.Fatalln("Unable to find a role assignment matching the parameters.")
