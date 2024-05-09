@@ -73,7 +73,7 @@ func GetRoleAssignment(name string, prefix string, role string, eligibleRoleAssi
 			if role == "" {
 				return &eligibleRoleAssignment
 			}
-			if strings.Contains(strings.ToLower(eligibleRoleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName), role) {
+			if strings.ToLower(eligibleRoleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName) == role {
 				return &eligibleRoleAssignment
 			}
 		}
@@ -106,7 +106,7 @@ func GetGroupAssignment(name string, prefix string, role string, eligibleGroupAs
 			if role == "" {
 				return &eligibleGroupAssignment
 			}
-			if strings.Contains(strings.ToLower(eligibleGroupAssignment.RoleDefinition.DisplayName), role) {
+			if strings.ToLower(eligibleGroupAssignment.RoleDefinition.DisplayName) == role {
 				return &eligibleGroupAssignment
 			}
 		}
