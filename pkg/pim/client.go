@@ -148,13 +148,20 @@ func ValidateRoleAssignmentRequest(scope string, roleAssignmentRequest RoleAssig
 		Payload: roleAssignmentValidationRequest,
 	}, validationResponse)
 
-	if validationResponse.Properties.Status != "Granted" {
+	if IsRoleAssignmentRequestFailed(validationResponse) {
 		log.Printf("ERROR: The role assignment validation failed with status '%s'", validationResponse.Properties.Status)
 		log.Fatalln(validationResponse)
 		return false
 	}
+	if IsRoleAssignmentRequestOK(validationResponse) {
+		return true
+	}
+	if IsRoleAssignmentRequestPending(validationResponse) {
+		log.Printf("WARNING: The role assignment request is pending with status '%s'", validationResponse.Properties.Status)
+		return true
+	}
 
-	return true
+	return false
 }
 
 func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, duration int, reason string, token string) *RoleAssignmentRequestResponse {

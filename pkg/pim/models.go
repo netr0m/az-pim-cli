@@ -81,6 +81,31 @@ type ScheduleInfo struct {
 	EndDateTime   interface{}             `json:"endDateTime"`
 }
 
+const (
+	StatusAccepted                    string = "Accepted"
+	StatusAdminApproved               string = "AdminApproved"
+	StatusAdminDenied                 string = "AdminDenied"
+	StatusCanceled                    string = "Canceled"
+	StatusDenied                      string = "Denied"
+	StatusFailed                      string = "Failed"
+	StatusFailedAsResourceIsLocked    string = "FailedAsResourceIsLocked"
+	StatusGranted                     string = "Granted"
+	StatusInvalid                     string = "Invalid"
+	StatusPendingAdminDecision        string = "PendingAdminDecision"
+	StatusPendingApproval             string = "PendingApproval"
+	StatusPendingApprovalProvisioning string = "PendingApprovalProvisioning"
+	StatusPendingEvaluation           string = "PendingEvaluation"
+	StatusPendingExternalProvisioning string = "PendingExternalProvisioning"
+	StatusPendingProvisioning         string = "PendingProvisioning"
+	StatusPendingRevocation           string = "PendingRevocation"
+	StatusPendingScheduleCreation     string = "PendingScheduleCreation"
+	StatusProvisioned                 string = "Provisioned"
+	StatusProvisioningStarted         string = "ProvisioningStarted"
+	StatusRevoked                     string = "Revoked"
+	StatusScheduleCreated             string = "ScheduleCreated"
+	StatusTimedOut                    string = "TimedOut"
+)
+
 type RoleAssignmentValidationProperties struct {
 	LinkedRoleEligibilityScheduleId string                  `json:"linkedRoleEligibilityScheduleId"`
 	TargetRoleAssignmentScheduleId  string                  `json:"targetRoleAssignmentScheduleId"`
