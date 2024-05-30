@@ -18,14 +18,14 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetPIMAccessTokenAzureCLI() string {
+func GetPIMAccessTokenAzureCLI(scope string) string {
 	cred, err := azidentity.NewAzureCLICredential(nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	tokenOpts := policy.TokenRequestOptions{
 		Scopes: []string{
-			AZ_PIM_SCOPE,
+			scope,
 		},
 	}
 	token, err := cred.GetToken(context.Background(), tokenOpts)

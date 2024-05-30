@@ -25,7 +25,7 @@ var activateCmd = &cobra.Command{
 		if subscriptionName == "" && subscriptionPrefix == "" {
 			log.Fatalf("Missing required parameter: You must specify either 'subscription-name' or 'subscription-prefix'.")
 		}
-		token := pim.GetPIMAccessTokenAzureCLI()
+		token := pim.GetPIMAccessTokenAzureCLI(pim.AZ_PIM_SCOPE)
 		subjectId := pim.GetUserInfo(token).ObjectId
 
 		eligibleRoleAssignments := pim.GetEligibleRoleAssignments(token)

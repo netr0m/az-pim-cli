@@ -14,7 +14,7 @@ var listCmd = &cobra.Command{
 	Aliases: []string{"l", "ls"},
 	Short:   "Query Azure PIM for eligible role assignments",
 	Run: func(cmd *cobra.Command, args []string) {
-		token := pim.GetPIMAccessTokenAzureCLI()
+		token := pim.GetPIMAccessTokenAzureCLI(pim.AZ_PIM_SCOPE)
 
 		eligibleRoleAssignments := pim.GetEligibleRoleAssignments(token)
 		utils.PrintEligibleRoles(eligibleRoleAssignments)
