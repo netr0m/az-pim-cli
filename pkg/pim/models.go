@@ -17,7 +17,7 @@ type AzureUserInfoClaims struct {
 }
 
 type PIMRequest struct {
-	Path    string
+	Url     string
 	Token   string
 	Method  string
 	Headers map[string][]string

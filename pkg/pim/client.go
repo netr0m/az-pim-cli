@@ -50,21 +50,19 @@ func GetUserInfo(token string) AzureUserInfo {
 }
 
 func Request(request *PIMRequest, responseModel any) any {
-	url := fmt.Sprintf("%s/%s", AZ_PIM_BASE_URL, request.Path)
-
 	// Prepare request body
 	var req *http.Request
 	var err error
 	if request.Payload != nil {
 		payload := new(bytes.Buffer)
 		json.NewEncoder(payload).Encode(request.Payload) //nolint:errcheck
-		req, err = http.NewRequest(request.Method, url, payload)
+		req, err = http.NewRequest(request.Method, request.Url, payload)
 		if err != nil {
 			log.Fatalf("ERROR: %v", err)
 		}
 	} else {
 		// Prepare the request
-		req, err = http.NewRequest(request.Method, url, nil)
+		req, err = http.NewRequest(request.Method, request.Url, nil)
 		if err != nil {
 			log.Fatalf("ERROR: %v", err)
 		}
@@ -114,7 +112,7 @@ func GetEligibleRoleAssignments(token string) *RoleAssignmentResponse {
 	}
 	responseModel := &RoleAssignmentResponse{}
 	_ = Request(&PIMRequest{
-		Path:   fmt.Sprintf("%s/roleEligibilityScheduleInstances", AZ_PIM_BASE_PATH),
+		Url:    fmt.Sprintf("%s/%s/roleEligibilityScheduleInstances", AZ_PIM_BASE_URL, AZ_PIM_BASE_PATH),
 		Token:  token,
 		Method: "GET",
 		Params: params,
@@ -136,8 +134,9 @@ func ValidateRoleAssignmentRequest(scope string, roleAssignmentRequest RoleAssig
 
 	validationResponse := &RoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
-		Path: fmt.Sprintf(
-			"%s/%s/roleAssignmentScheduleRequests/%s/validate",
+		Url: fmt.Sprintf(
+			"%s/%s/%s/roleAssignmentScheduleRequests/%s/validate",
+			AZ_PIM_BASE_URL,
 			scope,
 			AZ_PIM_BASE_PATH,
 			uuid.NewString(),
@@ -194,8 +193,9 @@ func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, dur
 
 	responseModel := &RoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
-		Path: fmt.Sprintf(
-			"%s/%s/roleAssignmentScheduleRequests/%s",
+		Url: fmt.Sprintf(
+			"%s/%s/%s/roleAssignmentScheduleRequests/%s",
+			AZ_PIM_BASE_URL,
 			scope,
 			AZ_PIM_BASE_PATH,
 			uuid.NewString(),
