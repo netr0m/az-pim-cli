@@ -83,3 +83,24 @@ func GetRoleAssignment(name string, prefix string, role string, eligibleRoleAssi
 
 	return nil
 }
+
+func GetGroupAssignment(name string, role string, eligibleGroupAssignments *pim.GroupAssignmentResponse) *pim.GroupAssignment {
+	name = strings.ToLower(name)
+	for _, eligibleGroupAssignment := range eligibleGroupAssignments.Value {
+		currentGroupName := strings.ToLower(eligibleGroupAssignment.RoleDefinition.Resource.DisplayName)
+
+		if currentGroupName == name {
+			if role == "" {
+				return &eligibleGroupAssignment
+			}
+			role = strings.ToLower(role)
+			if strings.Contains(strings.ToLower(eligibleGroupAssignment.RoleDefinition.DisplayName), role) {
+				return &eligibleGroupAssignment
+			}
+		}
+	}
+
+	log.Fatalln("Unable to find a group assignment matching the parameters.")
+
+	return nil
+}

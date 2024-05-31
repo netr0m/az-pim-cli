@@ -179,6 +179,41 @@ func ValidateRoleAssignmentRequest(scope string, roleAssignmentRequest RoleAssig
 	return false
 }
 
+func ValidateGroupAssignmentRequest(groupAssignmentRequest GroupAssignmentRequest, token string) bool {
+	var params = map[string]string{
+		"evaluateOnly": "true",
+	}
+
+	groupAssignmentValidationRequest := groupAssignmentRequest
+	groupAssignmentValidationRequest.Reason = "Evaluate Only"
+	groupAssignmentValidationRequest.TicketNumber = "Evaluate Only"
+	groupAssignmentValidationRequest.TicketSystem = "Evaluate Only"
+
+	validationResponse := &GroupAssignmentRequestResponse{}
+	_ = Request(&PIMRequest{
+		Url:     fmt.Sprintf("%s/%s/aadGroups/roleAssignmentRequests", AZ_PIM_GROUP_BASE_URL, AZ_PIM_GROUP_BASE_PATH),
+		Token:   token,
+		Method:  "POST",
+		Params:  params,
+		Payload: groupAssignmentValidationRequest,
+	}, validationResponse)
+
+	if IsGroupAssignmentRequestFailed(validationResponse) {
+		log.Printf("ERROR: The group assignment validation failed with status '%s', '%s'", validationResponse.Status.Status, validationResponse.Status.SubStatus)
+		log.Fatalln(validationResponse)
+		return false
+	}
+	if IsGroupAssignmentRequestOK(validationResponse) {
+		return true
+	}
+	if IsGroupAssignmentRequestPending(validationResponse) {
+		log.Printf("WARNING: The group assignment request is pending with status '%s', '%s'", validationResponse.Status.Status, validationResponse.Status.SubStatus)
+		return true
+	}
+
+	return false
+}
+
 func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, duration int, reason string, token string) *RoleAssignmentRequestResponse {
 	var params = map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
@@ -220,6 +255,39 @@ func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, dur
 		Method:  "PUT",
 		Params:  params,
 		Payload: roleAssignmentRequest,
+	}, responseModel)
+
+	return responseModel
+}
+
+func RequestGroupAssignment(subjectId string, groupAssignment *GroupAssignment, duration int, reason string, token string) *GroupAssignmentRequestResponse {
+	groupAssignmentRequest := &GroupAssignmentRequest{
+		RoleDefinitionId: groupAssignment.RoleDefinitionId,
+		ResourceId:       groupAssignment.ResourceId,
+		SubjectId:        subjectId,
+		AssignmentState:  "Active",
+		Type:             "UserAdd",
+		Reason:           reason,
+		TicketNumber:     "",
+		TicketSystem:     "az-pim-cli",
+		Schedule: &GroupAssignmentSchedule{
+			Type:          "Once",
+			StartDateTime: nil,
+			EndDateTime:   nil,
+			Duration:      fmt.Sprintf("PT%dM", duration),
+		},
+		LinkedEligibleRoleAssignmentId: groupAssignment.Id,
+		ScopedResourceId:               "",
+	}
+
+	ValidateGroupAssignmentRequest(*groupAssignmentRequest, token)
+
+	responseModel := &GroupAssignmentRequestResponse{}
+	_ = Request(&PIMRequest{
+		Url:     fmt.Sprintf("%s/%s/aadGroups/roleAssignmentRequests", AZ_PIM_GROUP_BASE_URL, AZ_PIM_GROUP_BASE_PATH),
+		Token:   token,
+		Method:  "POST",
+		Payload: groupAssignmentRequest,
 	}, responseModel)
 
 	return responseModel
