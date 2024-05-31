@@ -31,6 +31,26 @@ func PrintEligibleRoles(roleEligibilityScheduleInstances *pim.RoleAssignmentResp
 	}
 }
 
+func PrintEligibleGroups(groupAssignments *pim.GroupAssignmentResponse) {
+	var eligibleGroups = make(map[string][]string)
+
+	for _, groupAssignment := range groupAssignments.Value {
+		groupName := groupAssignment.RoleDefinition.Resource.DisplayName
+		roleName := groupAssignment.RoleDefinition.DisplayName
+		if _, ok := eligibleGroups[groupName]; !ok {
+			eligibleGroups[groupName] = []string{}
+		}
+		eligibleGroups[groupName] = append(eligibleGroups[groupName], roleName)
+	}
+
+	for grp, rol := range eligibleGroups {
+		fmt.Printf("== %s ==\n", grp)
+		for role := range rol {
+			fmt.Printf("\t - %s\n", rol[role])
+		}
+	}
+}
+
 func GetRoleAssignment(name string, prefix string, role string, eligibleRoleAssignments *pim.RoleAssignmentResponse) *pim.RoleAssignment {
 	for _, eligibleRoleAssignment := range eligibleRoleAssignments.Value {
 		var match *pim.RoleAssignment = nil

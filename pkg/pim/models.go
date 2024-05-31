@@ -65,6 +65,44 @@ type RoleAssignmentResponse struct {
 	Value []RoleAssignment `json:"value"`
 }
 
+type GroupAssignmentSubject struct {
+	Id            string `json:"id"`
+	Type          string `json:"type"`
+	DisplayName   string `json:"displayName"`
+	PrincipalName string `json:"principalName"`
+	Email         string `json:"email"`
+}
+
+type GroupResource struct {
+	Id          string `json:"id"`
+	Type        string `json:"type"`
+	DisplayName string `json:"displayName"`
+	Status      string `json:"status"`
+}
+
+type GroupDefinition struct {
+	Id          string         `json:"id"`
+	ResourceId  string         `json:"resourceId"`
+	Type        string         `json:"type"`
+	DisplayName string         `json:"displayName"`
+	Resource    *GroupResource `json:"resource"`
+}
+
+type GroupAssignment struct {
+	Id               string                  `json:"id"`
+	ResourceId       string                  `json:"resourceId"`
+	RoleDefinitionId string                  `json:"roleDefinitionId"`
+	SubjectId        string                  `json:"subjectId"`
+	AssignmentState  string                  `json:"assignmentState"`
+	Status           string                  `json:"status"`
+	Subject          *GroupAssignmentSubject `json:"subject"`
+	RoleDefinition   *GroupDefinition        `json:"roleDefinition"`
+}
+
+type GroupAssignmentResponse struct {
+	Value []GroupAssignment `json:"value"`
+}
+
 type TicketInfo struct {
 	TicketNumber string `json:"ticketNumber"`
 	TicketSystem string `json:"ticketSystem"`

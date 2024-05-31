@@ -121,6 +121,22 @@ func GetEligibleRoleAssignments(token string) *RoleAssignmentResponse {
 	return responseModel
 }
 
+func GetEligibleGroupAssignments(token string, subjectId string) *GroupAssignmentResponse {
+	var params = map[string]string{
+		"$expand": "linkedEligibleRoleAssignment,subject,scopedResource,roleDefinition($expand=resource)",
+		"$filter": fmt.Sprintf("(subject/id eq '%s') and (assignmentState eq 'Eligible')", subjectId),
+	}
+	responseModel := &GroupAssignmentResponse{}
+	_ = Request(&PIMRequest{
+		Url:    fmt.Sprintf("%s/%s/aadGroups/roleAssignments", AZ_PIM_GROUP_BASE_URL, AZ_PIM_GROUP_BASE_PATH),
+		Token:  token,
+		Method: "GET",
+		Params: params,
+	}, responseModel)
+
+	return responseModel
+}
+
 func ValidateRoleAssignmentRequest(scope string, roleAssignmentRequest RoleAssignmentRequestRequest, token string) bool {
 	var params = map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
