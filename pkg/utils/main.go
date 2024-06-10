@@ -31,6 +31,26 @@ func PrintEligibleRoles(roleEligibilityScheduleInstances *pim.RoleAssignmentResp
 	}
 }
 
+func PrintEligibleGroups(groupAssignments *pim.GroupAssignmentResponse) {
+	var eligibleGroups = make(map[string][]string)
+
+	for _, groupAssignment := range groupAssignments.Value {
+		groupName := groupAssignment.RoleDefinition.Resource.DisplayName
+		roleName := groupAssignment.RoleDefinition.DisplayName
+		if _, ok := eligibleGroups[groupName]; !ok {
+			eligibleGroups[groupName] = []string{}
+		}
+		eligibleGroups[groupName] = append(eligibleGroups[groupName], roleName)
+	}
+
+	for grp, rol := range eligibleGroups {
+		fmt.Printf("== %s ==\n", grp)
+		for role := range rol {
+			fmt.Printf("\t - %s\n", rol[role])
+		}
+	}
+}
+
 func GetRoleAssignment(name string, prefix string, role string, eligibleRoleAssignments *pim.RoleAssignmentResponse) *pim.RoleAssignment {
 	for _, eligibleRoleAssignment := range eligibleRoleAssignments.Value {
 		var match *pim.RoleAssignment = nil
@@ -60,6 +80,27 @@ func GetRoleAssignment(name string, prefix string, role string, eligibleRoleAssi
 	}
 
 	log.Fatalln("Unable to find a role assignment matching the parameters.")
+
+	return nil
+}
+
+func GetGroupAssignment(name string, role string, eligibleGroupAssignments *pim.GroupAssignmentResponse) *pim.GroupAssignment {
+	name = strings.ToLower(name)
+	for _, eligibleGroupAssignment := range eligibleGroupAssignments.Value {
+		currentGroupName := strings.ToLower(eligibleGroupAssignment.RoleDefinition.Resource.DisplayName)
+
+		if currentGroupName == name {
+			if role == "" {
+				return &eligibleGroupAssignment
+			}
+			role = strings.ToLower(role)
+			if strings.Contains(strings.ToLower(eligibleGroupAssignment.RoleDefinition.DisplayName), role) {
+				return &eligibleGroupAssignment
+			}
+		}
+	}
+
+	log.Fatalln("Unable to find a group assignment matching the parameters.")
 
 	return nil
 }

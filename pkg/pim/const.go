@@ -6,8 +6,14 @@ package pim
 // Base URL for the Azure Entra PIM API
 const AZ_PIM_BASE_URL string = "https://management.azure.com"
 
+// Base URL for the Azure PIM Groups API
+const AZ_PIM_GROUP_BASE_URL string = "https://api.azrbac.mspim.azure.com"
+
 // Base path for the Azure Entra PIM API
 const AZ_PIM_BASE_PATH string = "providers/Microsoft.Authorization"
+
+// Base path for the Azure PIM Groups API
+const AZ_PIM_GROUP_BASE_PATH = "api/v2/privilegedAccess"
 
 // Authority used for Azure authentication
 const AZ_AUTHORITY string = "https://login.microsoftonline.com/"
