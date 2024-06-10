@@ -47,7 +47,6 @@ Available Commands:
 Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
   -h, --help            help for az-pim-cli
-  -t, --token string    An access token for the PIM Groups API
 
 Use "az-pim-cli [command] --help" for more information about a command.
 
@@ -73,7 +72,6 @@ Flags:
 
 Global Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
-  -t, --token string    An access token for the PIM Groups API
 
 Use "az-pim-cli list [command] --help" for more information about a command.
 
@@ -92,11 +90,11 @@ Aliases:
   group, g, grp, groups
 
 Flags:
-  -h, --help   help for group
+  -h, --help           help for group
+  -t, --token string   An access token for the PIM Groups API (required). Consult the README for more information.
 
 Global Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
-  -t, --token string    An access token for the PIM Groups API
 
 ```
 
@@ -116,16 +114,15 @@ Available Commands:
   group       Sends a request to Azure PIM to activate the given group
 
 Flags:
-  -d, --duration int                 Duration in minutes that the role should be activated for (default 480)
-  -h, --help                         help for activate
-      --reason string                Reason for the activation (default "config")
-  -r, --role-name string             Specify the role to activate, if multiple roles are found for a subscription (e.g. 'Owner' and 'Contributor')
-  -s, --subscription-name string     The name of the subscription to activate
-  -p, --subscription-prefix string   The name prefix of the subscription to activate (e.g. 'S399'). Alternative to 'subscription-name'.
+  -d, --duration int    Duration in minutes that the role should be activated for (default 480)
+  -h, --help            help for activate
+  -n, --name string     The name of the resource to activate
+  -p, --prefix string   The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
+      --reason string   Reason for the activation (default "config")
+  -r, --role string     Specify the role to activate, if multiple roles are found for a subscription (e.g. 'Owner' and 'Contributor')
 
 Global Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
-  -t, --token string    An access token for the PIM Groups API
 
 Use "az-pim-cli activate [command] --help" for more information about a command.
 
@@ -138,22 +135,22 @@ $ az-pim-cli activate group --help
 Sends a request to Azure PIM to activate the given group
 
 Usage:
-  az-pim-cli activate group [group name] [flags]
+  az-pim-cli activate group [flags]
 
 Aliases:
   group, g, grp, groups
 
 Flags:
-  -h, --help   help for group
+  -h, --help           help for group
+  -t, --token string   An access token for the PIM Groups API (required). Consult the README for more information.
 
 Global Flags:
-  -c, --config string                config file (default is $HOME/.az-pim-cli.yaml)
-  -d, --duration int                 Duration in minutes that the role should be activated for (default 480)
-      --reason string                Reason for the activation (default "config")
-  -r, --role-name string             Specify the role to activate, if multiple roles are found for a subscription (e.g. 'Owner' and 'Contributor')
-  -s, --subscription-name string     The name of the subscription to activate
-  -p, --subscription-prefix string   The name prefix of the subscription to activate (e.g. 'S399'). Alternative to 'subscription-name'.
-  -t, --token string                 An access token for the PIM Groups API
+  -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
+  -d, --duration int    Duration in minutes that the role should be activated for (default 480)
+  -n, --name string     The name of the resource to activate
+  -p, --prefix string   The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
+      --reason string   Reason for the activation (default "config")
+  -r, --role string     Specify the role to activate, if multiple roles are found for a subscription (e.g. 'Owner' and 'Contributor')
 
 ```
 
@@ -169,12 +166,12 @@ $ az-pim-cli list
          - Contributor
 
 # Activate the first matching role in a subscription with the prefix 'S100'
-$ az-pim-cli activate --subscription-prefix S100
+$ az-pim-cli activate --prefix S100
 2024/05/31 15:05:25 Activating role 'Contributor' in subscription 'S100-Example-Subscription' with reason 'config'
 2024/05/31 15:05:34 The role 'Contributor' in 'S100-Example-Subscription' is now Provisioned
 
 # Activate a specific role ('Owner') in a subscription with the prefix 's100'
-$ az-pim-cli activate -p s100 --role-name owner
+$ az-pim-cli activate --prefix s100 --role owner
 2024/05/31 15:06:25 Activating role 'Owner' in subscription 'S100-Example-Subscription' with reason 'config'
 2024/05/31 15:06:34 The role 'Owner' in 'S100-Example-Subscription' is now Provisioned
 ```
@@ -187,7 +184,7 @@ $ az-pim-cli list groups
          - Owner
 
 # Activate the first matching role for the group 'my-entra-id-group'
-$ az-pim-cli activate group my-entra-id-group -d 5
+$ az-pim-cli activate group --name my-entra-id-group --duration 5
 2024/05/31 15:00:10 Activating role 'Owner' for group 'my-entra-id-group' with reason 'config'
 2024/05/31 15:00:23 The role 'Owner' for group 'my-entra-id-group' is now Active
 ```
