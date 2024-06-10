@@ -47,7 +47,7 @@ var activateGroupCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		subjectId := pim.GetUserInfo(pimGroupsToken).ObjectId
 
-		eligibleGroupAssignments := pim.GetEligibleGroupAssignments(Token, subjectId)
+		eligibleGroupAssignments := pim.GetEligibleGroupAssignments(pimGroupsToken, subjectId)
 		groupAssignment := utils.GetGroupAssignment(name, prefix, roleName, eligibleGroupAssignments)
 
 		log.Printf(
@@ -57,7 +57,7 @@ var activateGroupCmd = &cobra.Command{
 			reason,
 		)
 
-		requestResponse := pim.RequestGroupAssignment(subjectId, groupAssignment, duration, reason, Token)
+		requestResponse := pim.RequestGroupAssignment(subjectId, groupAssignment, duration, reason, pimGroupsToken)
 		log.Printf("The role '%s' for group '%s' is now %s", groupAssignment.RoleDefinition.DisplayName, groupAssignment.RoleDefinition.Resource.DisplayName, requestResponse.AssignmentState)
 	},
 }
@@ -72,6 +72,9 @@ func init() {
 	activateCmd.PersistentFlags().StringVarP(&roleName, "role", "r", "", "Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')")
 	activateCmd.PersistentFlags().IntVarP(&duration, "duration", "d", pim.DEFAULT_DURATION_MINUTES, "Duration in minutes that the role should be activated for")
 	activateCmd.PersistentFlags().StringVar(&reason, "reason", pim.DEFAULT_REASON, "Reason for the activation")
+
+	activateGroupCmd.PersistentFlags().StringVarP(&pimGroupsToken, "token", "t", "", "An access token for the PIM Groups API (required). Consult the README for more information.")
+	activateGroupCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
 
 	activateCmd.MarkFlagsOneRequired("name", "prefix")
 	activateCmd.MarkFlagsMutuallyExclusive("name", "prefix")
