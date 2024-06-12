@@ -52,17 +52,18 @@ func PrintEligibleGroups(groupAssignments *pim.GroupAssignmentResponse) {
 }
 
 func GetRoleAssignment(name string, prefix string, role string, eligibleRoleAssignments *pim.RoleAssignmentResponse) *pim.RoleAssignment {
+	name = strings.ToLower(name)
+	prefix = strings.ToLower(prefix)
+	role = strings.ToLower(role)
 	for _, eligibleRoleAssignment := range eligibleRoleAssignments.Value {
 		var match *pim.RoleAssignment = nil
 		subscriptionName := strings.ToLower(eligibleRoleAssignment.Properties.ExpandedProperties.Scope.DisplayName)
 
 		if len(prefix) != 0 {
-			prefix = strings.ToLower(prefix)
 			if strings.HasPrefix(subscriptionName, prefix) {
 				match = &eligibleRoleAssignment
 			}
 		} else if len(name) != 0 {
-			name = strings.ToLower(name)
 			if subscriptionName == name {
 				match = &eligibleRoleAssignment
 			}
@@ -72,7 +73,6 @@ func GetRoleAssignment(name string, prefix string, role string, eligibleRoleAssi
 			if role == "" {
 				return &eligibleRoleAssignment
 			}
-			role = strings.ToLower(role)
 			if strings.Contains(strings.ToLower(eligibleRoleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName), role) {
 				return &eligibleRoleAssignment
 			}
@@ -84,16 +84,28 @@ func GetRoleAssignment(name string, prefix string, role string, eligibleRoleAssi
 	return nil
 }
 
-func GetGroupAssignment(name string, role string, eligibleGroupAssignments *pim.GroupAssignmentResponse) *pim.GroupAssignment {
+func GetGroupAssignment(name string, prefix string, role string, eligibleGroupAssignments *pim.GroupAssignmentResponse) *pim.GroupAssignment {
 	name = strings.ToLower(name)
+	prefix = strings.ToLower(prefix)
+	role = strings.ToLower(role)
 	for _, eligibleGroupAssignment := range eligibleGroupAssignments.Value {
+		var match *pim.GroupAssignment = nil
 		currentGroupName := strings.ToLower(eligibleGroupAssignment.RoleDefinition.Resource.DisplayName)
 
-		if currentGroupName == name {
+		if len(prefix) != 0 {
+			if strings.HasPrefix(currentGroupName, prefix) {
+				match = &eligibleGroupAssignment // #nosec G601 false positive with go >= v1.22
+			}
+		} else if len(name) != 0 {
+			if currentGroupName == name {
+				match = &eligibleGroupAssignment // #nosec G601 false positive with go >= v1.22
+			}
+		}
+
+		if match != nil {
 			if role == "" {
 				return &eligibleGroupAssignment
 			}
-			role = strings.ToLower(role)
 			if strings.Contains(strings.ToLower(eligibleGroupAssignment.RoleDefinition.DisplayName), role) {
 				return &eligibleGroupAssignment
 			}

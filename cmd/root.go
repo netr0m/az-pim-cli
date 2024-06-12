@@ -14,7 +14,7 @@ import (
 )
 
 var cfgFile string
-var Token string
+var pimGroupsToken string
 
 var rootCmd = &cobra.Command{
 	Use:   "az-pim-cli",
@@ -37,7 +37,6 @@ func init() {
 
 	// Global flags
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.az-pim-cli.yaml)")
-	rootCmd.PersistentFlags().StringVarP(&Token, "token", "t", "", "An access token for the PIM Groups API")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -66,6 +65,8 @@ func initConfig() {
 	}
 
 	bindFlags(rootCmd, vpr)
+	bindFlags(listGroupCmd, vpr)
+	bindFlags(activateGroupCmd, vpr)
 }
 
 func bindFlags(cmd *cobra.Command, vpr *viper.Viper) {
