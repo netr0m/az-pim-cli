@@ -114,12 +114,13 @@ Available Commands:
   group       Sends a request to Azure PIM to activate the given group
 
 Flags:
+      --dry-run         Display the resource that would be activated, without requesting the activation
   -d, --duration int    Duration in minutes that the role should be activated for (default 480)
   -h, --help            help for activate
   -n, --name string     The name of the resource to activate
   -p, --prefix string   The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
       --reason string   Reason for the activation (default "config")
-  -r, --role string     Specify the role to activate, if multiple roles are found for a subscription (e.g. 'Owner' and 'Contributor')
+  -r, --role string     Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')
 
 Global Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
@@ -146,11 +147,12 @@ Flags:
 
 Global Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
+      --dry-run         Display the resource that would be activated, without requesting the activation
   -d, --duration int    Duration in minutes that the role should be activated for (default 480)
   -n, --name string     The name of the resource to activate
   -p, --prefix string   The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
       --reason string   Reason for the activation (default "config")
-  -r, --role string     Specify the role to activate, if multiple roles are found for a subscription (e.g. 'Owner' and 'Contributor')
+  -r, --role string     Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')
 
 ```
 

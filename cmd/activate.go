@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 
 	"github.com/netr0m/az-pim-cli/pkg/pim"
 	"github.com/netr0m/az-pim-cli/pkg/utils"
@@ -16,6 +17,7 @@ var prefix string
 var roleName string
 var duration int
 var reason string
+var dryRun bool
 
 var activateCmd = &cobra.Command{
 	Use:     "activate",
@@ -35,6 +37,10 @@ var activateCmd = &cobra.Command{
 			reason,
 		)
 
+		if dryRun {
+			log.Printf("Skipping activation due to 'dry-run'.")
+			os.Exit(0)
+		}
 		requestResponse := pim.RequestRoleAssignment(subjectId, roleAssignment, duration, reason, token)
 		log.Printf("The role '%s' in '%s' is now %s", roleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName, roleAssignment.Properties.ExpandedProperties.Scope.DisplayName, requestResponse.Properties.Status)
 	},
@@ -57,6 +63,10 @@ var activateGroupCmd = &cobra.Command{
 			reason,
 		)
 
+		if dryRun {
+			log.Printf("Skipping activation due to 'dry-run'.")
+			os.Exit(0)
+		}
 		requestResponse := pim.RequestGroupAssignment(subjectId, groupAssignment, duration, reason, pimGroupsToken)
 		log.Printf("The role '%s' for group '%s' is now %s", groupAssignment.RoleDefinition.DisplayName, groupAssignment.RoleDefinition.Resource.DisplayName, requestResponse.AssignmentState)
 	},
@@ -72,6 +82,7 @@ func init() {
 	activateCmd.PersistentFlags().StringVarP(&roleName, "role", "r", "", "Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')")
 	activateCmd.PersistentFlags().IntVarP(&duration, "duration", "d", pim.DEFAULT_DURATION_MINUTES, "Duration in minutes that the role should be activated for")
 	activateCmd.PersistentFlags().StringVar(&reason, "reason", pim.DEFAULT_REASON, "Reason for the activation")
+	activateCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Display the resource that would be activated, without requesting the activation")
 
 	activateGroupCmd.PersistentFlags().StringVarP(&pimGroupsToken, "token", "t", "", "An access token for the PIM Groups API (required). Consult the README for more information.")
 	activateGroupCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
