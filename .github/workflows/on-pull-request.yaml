@@ -1,0 +1,13 @@
+name: Pull Request
+on:
+  pull_request:
+    types: [opened, synchronize, edited, reopened]
+
+jobs:
+  lint:
+    name: Check code quality
+    uses: ./.github/workflows/lint.yaml
+
+  conventional-commits:
+    name: Check for conventional commits compliance
+    uses: ./.github/workflows/conventional-commits.yaml
