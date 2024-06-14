@@ -1,0 +1,51 @@
+name: Check code quality
+on: [workflow_call]
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  pre-commit:
+    strategy:
+      fail-fast: false
+      matrix:
+        hook: ['builtin', 'golangci-lint']
+        include:
+          - hook: builtin
+            skip: golangci-lint,golangci-lint-full
+          - hook: golangci-lint
+            hook_id: golangci-lint-full
+
+    name: Run pre-commit hook ${{ matrix.hook }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          check-latest: true
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Get Python version
+        id: get-py-version
+        run: echo "py_version=$(python -V | awk -F' ' '{ print $2 }')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ steps.get-py-version.outputs.py_version }}-${{ runner.os }}-${{ runner.arch }}
+          restore-keys: |
+            pre-commit-${{ steps.get-py-version.outputs.py_version }}-${{ runner.os }}
+            pre-commit-${{ steps.get-py-version.outputs.py_version }}
+            pre-commit
+
+      - name: Running ${{ matrix.hook }} pre-commit hooks
+        run: SKIP="${{ matrix.skip }}" pre-commit run ${{ matrix.hook_id }} --all-files
