@@ -13,7 +13,6 @@ type AzureUserInfo struct {
 type AzureUserInfoClaims struct {
 	*jwt.MapClaims
 	*AzureUserInfo
-	extra map[string]interface{}
 }
 
 type PIMRequest struct {
