@@ -61,7 +61,12 @@ func initConfig() {
 	vpr.AutomaticEnv()
 
 	// If a config file is found, read it in.
-	if err := vpr.ReadInConfig(); err == nil {
+	if err := vpr.ReadInConfig(); err != nil {
+		// If user provided a config file
+		if cfgFile != "" {
+			fmt.Printf("error loading config file: %v", err)
+			os.Exit(1)
+		}
 	}
 
 	bindFlags(rootCmd, vpr)
