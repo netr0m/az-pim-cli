@@ -14,3 +14,10 @@ repos:
   hooks:
     - id: golangci-lint
     - id: golangci-lint-full
+
+- repo: https://github.com/compilerla/conventional-pre-commit
+  rev: v3.2.0
+  hooks:
+    - id: conventional-pre-commit
+      stages: [commit-msg]
+      args: [feat, fix, refactor, chore, test, ci, build, lint, docs]
