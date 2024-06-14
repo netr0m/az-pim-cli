@@ -13,4 +13,4 @@ repos:
   rev: v1.59.1
   hooks:
     - id: golangci-lint
-      args: ["-E", "cyclop,gocritic,gosec"]
+    - id: golangci-lint-full
