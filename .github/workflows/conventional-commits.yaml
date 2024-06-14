@@ -1,0 +1,15 @@
+name: Conventional Commits
+on: [workflow_call]
+
+jobs:
+  conventional-commits:
+    name: Check for Conventional Commits compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Check commit messages
+        uses: webiny/action-conventional-commits@v1.3.0
+        with:
+          allowed-commit-types: "feat,fix,refactor,chore,test,ci,build,lint,docs"
