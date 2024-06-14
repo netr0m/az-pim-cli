@@ -1,0 +1,43 @@
+name: Release a tag
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create a release with goreleaser
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Actor
+        if: github.actor != 'netr0m'
+        run: exit 1
+
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          check-latest: true
+
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            go-${{ runner.os }}-
+
+      - name: Run goreleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean --timeout=30m
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
