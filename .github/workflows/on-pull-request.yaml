@@ -11,3 +11,13 @@ jobs:
   conventional-commits:
     name: Check for conventional commits compliance
     uses: ./.github/workflows/conventional-commits.yaml
+
+  snyk:
+    name: Scan dependencies
+    uses: ./.github/workflows/snyk.yaml
+    with:
+      severity-treshold: low
+    secrets: inherit
+    permissions:
+      contents: read
+      security-events: write

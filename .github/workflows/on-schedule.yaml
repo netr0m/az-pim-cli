@@ -1,0 +1,12 @@
+name: On Schedule
+on:
+  schedule:
+    - cron: '30 2 * * 0'
+
+jobs:
+  snyk:
+    name: Scan dependencies
+    uses: ./.github/workflows/snyk.yaml
+    with:
+      severity-treshold: medium
+    secrets: inherit

@@ -1,0 +1,49 @@
+name: Snyk Security
+on:
+  workflow_call:
+    inputs:
+      severity-treshold:
+        default: low
+        description: Only report vulnerabilities of provided level or higher
+        type: string
+      fail-on-error:
+        default: true
+        description: Whether to fail if Snyk found errors
+        type: boolean
+    secrets:
+      SNYK_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  snyk:
+    name: Run Snyk
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Scan dependencies
+        uses: snyk/actions/golang@master
+        id: snyk-scan
+        continue-on-error: true # To make sure that SARIF upload gets called
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test --sarif-file-output=snyk-test.sarif --severity-threshold=${{ inputs.severity-treshold }} --fail-on=all
+
+      - name: Upload result to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-test.sarif
+
+      - name: Fail on Snyk test error
+        if: steps.snyk-scan.outcome != 'success' && inputs.fail-on-error
+        run: exit 1
