@@ -1,0 +1,60 @@
+name: Semgrep
+on:
+  workflow_call:
+    inputs:
+      fail-on-error:
+        default: true
+        description: Whether to fail if Semgrep found errors
+        type: boolean
+    secrets:
+      SEMGREP_TOKEN:
+        required: false
+        description: Token for Semgrep (to run with Pro)
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  semgrep:
+    name: Run Semgrep
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+    if: (github.actor != 'dependabot[bot]')
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set semgrep command (Pro if 'SEMGREP_TOKEN' is provided)
+        run: |
+          echo SEMGREP_CMD=$(if [ -n "$SEMGREP_APP_TOKEN" ]; then
+            echo "ci"
+          else
+            echo "scan --config auto ."
+          fi) >> "$GITHUB_ENV"
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_TOKEN }}
+
+      - name: Scan code
+        run: "semgrep $SEMGREP_CMD --sarif-output=semgrep-scan.sarif"
+        id: semgrep-scan
+        continue-on-error: true # To make sure that SARIF upload gets called
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_TOKEN }}
+
+      - name: Install node (to upload sarif)
+        run: apk add --no-cache nodejs
+
+      - name: Upload result to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep-scan.sarif
+
+      - name: Fail on Semgrep scan error
+        if: steps.semgrep-scan.outcome != 'success' && inputs.fail-on-error
+        run: exit 1
