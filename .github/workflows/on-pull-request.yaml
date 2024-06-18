@@ -21,3 +21,11 @@ jobs:
     permissions:
       contents: read
       security-events: write
+
+  semgrep:
+    name: Scan source code
+    uses: ./.github/workflows/semgrep.yaml
+    secrets: inherit
+    permissions:
+      contents: read
+      security-events: write
