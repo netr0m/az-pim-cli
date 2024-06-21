@@ -1,6 +1,8 @@
 # Azure PIM CLI
 *Azure Privileged Identity Management Command Line Interface*
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/netr0m/az-pim-cli.svg)](https://pkg.go.dev/github.com/netr0m/az-pim-cli)
+
 `az-pim-cli` eases the process of listing and activating Azure PIM roles by allowing activation via the command line. Authentication is handled with the `azure.identity` library by utilizing the `AzureCLICredential` method.
 
 ## Install
@@ -43,6 +45,7 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
   list        Query Azure PIM for eligible role assignments
+  version     Display the version of az-pim-cli
 
 Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
@@ -229,3 +232,9 @@ To acquire the token, do the following:
   PIM_TOKEN=eyJ0[...]
   ```
 6. You may now, and for the duration of the token's lifetime, list and activate 'Entra groups' using this tool
+
+## Contributing
+
+Want to contribute to the project? There are a few things you need to know.
+
+See [CONTRIBUTING](./CONTRIBUTING.md) to get started
