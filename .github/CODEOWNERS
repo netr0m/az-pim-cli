@@ -1,0 +1,5 @@
+# Each line is a file pattern followed by one or more owners.
+# Order matters. If two rules match the same file, the last one takes precedence
+
+# Path  Owner (User|Team) [Owner2] [Owner3]
+*       @netr0m
