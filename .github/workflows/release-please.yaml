@@ -1,0 +1,26 @@
+name: Release please
+on:
+  workflow_call:
+    secrets:
+      RELEASE_PLEASE_TOKEN:
+        description: A PAT for the release-please action
+        required: true
+    outputs:
+      release_created:
+        description: Whether a GitHub Release has been created
+        value: ${{ jobs.release-please.outputs.release_created }}
+      tag_name:
+        description: The Release tag (e.g. v1.0.0)
+        value: ${{ jobs.release-please.outputs.tag_name }}
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@v4
