@@ -6,9 +6,6 @@ on:
         description: The tag to checkout to
         required: true
         type: string
-    secrets:
-      GITHUB_TOKEN:
-        required: true
 
 permissions:
   contents: write
