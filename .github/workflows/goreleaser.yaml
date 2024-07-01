@@ -1,24 +1,28 @@
-name: Release a tag
+name: Goreleaser
 on:
-  push:
-    tags: ["v*"]
+  workflow_call:
+    inputs:
+      tag:
+        description: The tag to checkout to
+        required: true
+        type: string
+    secrets:
+      GITHUB_TOKEN:
+        required: true
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  goreleaser:
     name: Create a release with goreleaser
     runs-on: ubuntu-latest
     steps:
-      - name: Check Actor
-        if: github.actor != 'netr0m'
-        run: exit 1
-
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag }}
 
       - name: Setup go
         uses: actions/setup-go@v5
@@ -26,7 +30,7 @@ jobs:
           go-version-file: go.mod
           check-latest: true
 
-      - name: Cache pre-commit
+      - name: Cache go modules
         uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod

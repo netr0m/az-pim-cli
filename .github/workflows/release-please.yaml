@@ -28,3 +28,14 @@ jobs:
       - name: Run release-please
         id: release
         uses: googleapis/release-please-action@v4
+
+  goreleaser:
+    name: goreleaser
+    needs: [release-please]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    uses: ./.github/workflows/goreleaser.yaml
+    with:
+      tag: ${{ needs.release-please.outputs.tag_name }}
+    secrets: inherit
+    permissions:
+      contents: write
