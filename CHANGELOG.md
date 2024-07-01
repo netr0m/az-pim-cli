@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/netr0m/az-pim-cli/compare/v1.0.1...v1.0.2) (2024-07-01)
+
+
+### chore
+
+* release 1.0.2 ([#46](https://github.com/netr0m/az-pim-cli/issues/46)) ([42a51c2](https://github.com/netr0m/az-pim-cli/commit/42a51c2f64a6d73ec2bbf69bf7acdf59a5fe6e1c))
+
 ## [1.0.1](https://github.com/netr0m/az-pim-cli/compare/v1.0.1...v1.0.1) (2024-07-01)
 
 
