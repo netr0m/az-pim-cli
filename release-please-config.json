@@ -1,7 +1,6 @@
 {
   "packages": {
     ".": {
-      "package-name": "az-pim-cli",
       "changelog-path": "CHANGELOG.md",
       "release-type": "go",
       "bump-minor-pre-major": false,
