@@ -13,6 +13,10 @@ on:
         description: The Release tag (e.g. v1.0.0)
         value: ${{ jobs.release-please.outputs.tag_name }}
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   release-please:
     name: release-please
