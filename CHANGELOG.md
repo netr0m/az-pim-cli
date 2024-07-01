@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/netr0m/az-pim-cli/compare/az-pim-cli-v1.0.0...az-pim-cli-v1.0.1) (2024-07-01)
+
+
+### ci
+
+* add release-please workflow ([#36](https://github.com/netr0m/az-pim-cli/issues/36)) ([d07b053](https://github.com/netr0m/az-pim-cli/commit/d07b053cfdb76b701c2cc9cd059e45e057ce4950))
+* add workflow triggered by merge to main ([#37](https://github.com/netr0m/az-pim-cli/issues/37)) ([aff631d](https://github.com/netr0m/az-pim-cli/commit/aff631d963a083b211122478485ffc50679c29e3))
+
 ## 1.0.0 (2024-06-27)
 
 
