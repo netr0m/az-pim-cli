@@ -70,6 +70,7 @@ func initConfig() {
 	}
 
 	bindFlags(rootCmd, vpr)
+	bindFlags(activateCmd, vpr)
 	bindFlags(listGroupCmd, vpr)
 	bindFlags(activateGroupCmd, vpr)
 }
