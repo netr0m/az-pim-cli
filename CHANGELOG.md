@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/netr0m/az-pim-cli/compare/v1.0.1...v1.1.0) (2024-09-13)
+
+
+### Features
+
+* add support for specifying 'ticket number' and 'ticket system' ([#56](https://github.com/netr0m/az-pim-cli/issues/56)) ([a62c52f](https://github.com/netr0m/az-pim-cli/commit/a62c52ff158a018d46598fa6c631ebc020c52d53))
+
 ## 1.0.1 (2024-07-01)
 
 
