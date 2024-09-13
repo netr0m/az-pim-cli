@@ -17,6 +17,8 @@ var prefix string
 var roleName string
 var duration int
 var reason string
+var ticketSystem string
+var ticketNumber string
 var dryRun bool
 
 var activateCmd = &cobra.Command{
@@ -31,17 +33,19 @@ var activateCmd = &cobra.Command{
 		roleAssignment := utils.GetRoleAssignment(name, prefix, roleName, eligibleRoleAssignments)
 
 		log.Printf(
-			"Activating role '%s' in subscription '%s' with reason '%s'",
+			"Activating role '%s' in subscription '%s' with reason '%s' (ticket: %s [%s])",
 			roleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName,
 			roleAssignment.Properties.ExpandedProperties.Scope.DisplayName,
 			reason,
+			ticketNumber,
+			ticketSystem,
 		)
 
 		if dryRun {
 			log.Printf("Skipping activation due to 'dry-run'.")
 			os.Exit(0)
 		}
-		requestResponse := pim.RequestRoleAssignment(subjectId, roleAssignment, duration, reason, token)
+		requestResponse := pim.RequestRoleAssignment(subjectId, roleAssignment, duration, reason, ticketSystem, ticketNumber, token)
 		log.Printf("The role '%s' in '%s' is now %s", roleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName, roleAssignment.Properties.ExpandedProperties.Scope.DisplayName, requestResponse.Properties.Status)
 	},
 }
@@ -57,17 +61,19 @@ var activateGroupCmd = &cobra.Command{
 		groupAssignment := utils.GetGroupAssignment(name, prefix, roleName, eligibleGroupAssignments)
 
 		log.Printf(
-			"Activating role '%s' for group '%s' with reason '%s'",
+			"Activating role '%s' for group '%s' with reason '%s' (ticket: %s [%s])",
 			groupAssignment.RoleDefinition.DisplayName,
 			groupAssignment.RoleDefinition.Resource.DisplayName,
 			reason,
+			ticketNumber,
+			ticketSystem,
 		)
 
 		if dryRun {
 			log.Printf("Skipping activation due to 'dry-run'.")
 			os.Exit(0)
 		}
-		requestResponse := pim.RequestGroupAssignment(subjectId, groupAssignment, duration, reason, pimGroupsToken)
+		requestResponse := pim.RequestGroupAssignment(subjectId, groupAssignment, duration, reason, ticketSystem, ticketNumber, pimGroupsToken)
 		log.Printf("The role '%s' for group '%s' is now %s", groupAssignment.RoleDefinition.DisplayName, groupAssignment.RoleDefinition.Resource.DisplayName, requestResponse.AssignmentState)
 	},
 }
@@ -82,6 +88,8 @@ func init() {
 	activateCmd.PersistentFlags().StringVarP(&roleName, "role", "r", "", "Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')")
 	activateCmd.PersistentFlags().IntVarP(&duration, "duration", "d", pim.DEFAULT_DURATION_MINUTES, "Duration in minutes that the role should be activated for")
 	activateCmd.PersistentFlags().StringVar(&reason, "reason", pim.DEFAULT_REASON, "Reason for the activation")
+	activateCmd.PersistentFlags().StringVar(&ticketSystem, "ticket-system", "", "Ticket system for the activation")
+	activateCmd.PersistentFlags().StringVarP(&ticketNumber, "ticket-number", "T", "", "Ticket number for the activation")
 	activateCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Display the resource that would be activated, without requesting the activation")
 
 	activateGroupCmd.PersistentFlags().StringVarP(&pimGroupsToken, "token", "t", "", "An access token for the PIM Groups API (required). Consult the README for more information.")

@@ -214,7 +214,7 @@ func ValidateGroupAssignmentRequest(groupAssignmentRequest GroupAssignmentReques
 	return false
 }
 
-func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, duration int, reason string, token string) *RoleAssignmentRequestResponse {
+func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, duration int, reason string, ticketSystem string, ticketNumber string, token string) *RoleAssignmentRequestResponse {
 	var params = map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
 	}
@@ -233,7 +233,7 @@ func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, dur
 					Duration: fmt.Sprintf("PT%dM", duration),
 				},
 			},
-			TicketInfo:       &TicketInfo{TicketNumber: "", TicketSystem: "az-pim-cli"},
+			TicketInfo:       &TicketInfo{TicketNumber: ticketNumber, TicketSystem: ticketSystem},
 			IsValidationOnly: false,
 			IsActivativation: true,
 		},
@@ -260,7 +260,7 @@ func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, dur
 	return responseModel
 }
 
-func RequestGroupAssignment(subjectId string, groupAssignment *GroupAssignment, duration int, reason string, token string) *GroupAssignmentRequestResponse {
+func RequestGroupAssignment(subjectId string, groupAssignment *GroupAssignment, duration int, reason string, ticketSystem string, ticketNumber string, token string) *GroupAssignmentRequestResponse {
 	groupAssignmentRequest := &GroupAssignmentRequest{
 		RoleDefinitionId: groupAssignment.RoleDefinitionId,
 		ResourceId:       groupAssignment.ResourceId,
@@ -268,8 +268,8 @@ func RequestGroupAssignment(subjectId string, groupAssignment *GroupAssignment, 
 		AssignmentState:  "Active",
 		Type:             "UserAdd",
 		Reason:           reason,
-		TicketNumber:     "",
-		TicketSystem:     "az-pim-cli",
+		TicketNumber:     ticketNumber,
+		TicketSystem:     ticketSystem,
 		Schedule: &GroupAssignmentSchedule{
 			Type:          "Once",
 			StartDateTime: nil,
