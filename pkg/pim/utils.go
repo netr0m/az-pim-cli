@@ -3,7 +3,7 @@ Copyright © 2024 netr0m <netr0m@pm.me>
 */
 package pim
 
-func IsRoleAssignmentRequestFailed(requestResponse *RoleAssignmentRequestResponse) bool {
+func IsResourceAssignmentRequestFailed(requestResponse *ResourceAssignmentRequestResponse) bool {
 	switch requestResponse.Properties.Status {
 	case StatusAdminDenied, StatusCanceled, StatusDenied, StatusFailed, StatusFailedAsResourceIsLocked, StatusInvalid, StatusRevoked, StatusTimedOut:
 		return true
@@ -19,7 +19,7 @@ func IsGroupAssignmentRequestFailed(requestResponse *GroupAssignmentRequestRespo
 	return false
 }
 
-func IsRoleAssignmentRequestPending(requestResponse *RoleAssignmentRequestResponse) bool {
+func IsResourceAssignmentRequestPending(requestResponse *ResourceAssignmentRequestResponse) bool {
 	switch requestResponse.Properties.Status {
 	case StatusPendingAdminDecision, StatusPendingApproval, StatusPendingApprovalProvisioning, StatusPendingEvaluation, StatusPendingExternalProvisioning, StatusPendingProvisioning, StatusPendingRevocation, StatusPendingScheduleCreation:
 		return true
@@ -35,7 +35,7 @@ func IsGroupAssignmentRequestPending(requestResponse *GroupAssignmentRequestResp
 	return false
 }
 
-func IsRoleAssignmentRequestOK(requestResponse *RoleAssignmentRequestResponse) bool {
+func IsResourceAssignmentRequestOK(requestResponse *ResourceAssignmentRequestResponse) bool {
 	switch requestResponse.Properties.Status {
 	case StatusAccepted, StatusAdminApproved, StatusGranted, StatusProvisioned, StatusProvisioningStarted, StatusScheduleCreated:
 		return true

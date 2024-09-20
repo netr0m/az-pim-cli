@@ -105,12 +105,12 @@ func Request(request *PIMRequest, responseModel any) any {
 	return responseModel
 }
 
-func GetEligibleRoleAssignments(token string) *RoleAssignmentResponse {
+func GetEligibleResourceAssignments(token string) *ResourceAssignmentResponse {
 	var params = map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
 		"$filter":     "asTarget()",
 	}
-	responseModel := &RoleAssignmentResponse{}
+	responseModel := &ResourceAssignmentResponse{}
 	_ = Request(&PIMRequest{
 		Url:    fmt.Sprintf("%s/%s/roleEligibilityScheduleInstances", AZ_PIM_BASE_URL, AZ_PIM_BASE_PATH),
 		Token:  token,
@@ -137,18 +137,18 @@ func GetEligibleGroupAssignments(token string, subjectId string) *GroupAssignmen
 	return responseModel
 }
 
-func ValidateRoleAssignmentRequest(scope string, roleAssignmentRequest RoleAssignmentRequestRequest, token string) bool {
+func ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest ResourceAssignmentRequestRequest, token string) bool {
 	var params = map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
 	}
 
-	roleAssignmentValidationRequest := roleAssignmentRequest
-	roleAssignmentValidationRequest.Properties.Justification = "validation only call"
-	roleAssignmentValidationRequest.Properties.TicketInfo.TicketNumber = "Evaluate Only"
-	roleAssignmentValidationRequest.Properties.TicketInfo.TicketSystem = "Evaluate Only"
-	roleAssignmentValidationRequest.Properties.IsValidationOnly = true
+	resourceAssignmentValidationRequest := resourceAssignmentRequest
+	resourceAssignmentValidationRequest.Properties.Justification = "validation only call"
+	resourceAssignmentValidationRequest.Properties.TicketInfo.TicketNumber = "Evaluate Only"
+	resourceAssignmentValidationRequest.Properties.TicketInfo.TicketSystem = "Evaluate Only"
+	resourceAssignmentValidationRequest.Properties.IsValidationOnly = true
 
-	validationResponse := &RoleAssignmentRequestResponse{}
+	validationResponse := &ResourceAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
 		Url: fmt.Sprintf(
 			"%s/%s/%s/roleAssignmentScheduleRequests/%s/validate",
@@ -160,18 +160,18 @@ func ValidateRoleAssignmentRequest(scope string, roleAssignmentRequest RoleAssig
 		Token:   token,
 		Method:  "POST",
 		Params:  params,
-		Payload: roleAssignmentValidationRequest,
+		Payload: resourceAssignmentValidationRequest,
 	}, validationResponse)
 
-	if IsRoleAssignmentRequestFailed(validationResponse) {
+	if IsResourceAssignmentRequestFailed(validationResponse) {
 		log.Printf("ERROR: The role assignment validation failed with status '%s'", validationResponse.Properties.Status)
 		log.Fatalln(validationResponse)
 		return false
 	}
-	if IsRoleAssignmentRequestOK(validationResponse) {
+	if IsResourceAssignmentRequestOK(validationResponse) {
 		return true
 	}
-	if IsRoleAssignmentRequestPending(validationResponse) {
+	if IsResourceAssignmentRequestPending(validationResponse) {
 		log.Printf("WARNING: The role assignment request is pending with status '%s'", validationResponse.Properties.Status)
 		return true
 	}
@@ -214,17 +214,17 @@ func ValidateGroupAssignmentRequest(groupAssignmentRequest GroupAssignmentReques
 	return false
 }
 
-func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, duration int, reason string, ticketSystem string, ticketNumber string, token string) *RoleAssignmentRequestResponse {
+func RequestResourceAssignment(subjectId string, resourceAssignment *ResourceAssignment, duration int, reason string, ticketSystem string, ticketNumber string, token string) *ResourceAssignmentRequestResponse {
 	var params = map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
 	}
 
-	roleAssignmentRequest := &RoleAssignmentRequestRequest{
-		Properties: RoleAssignmentRequestProperties{
+	resourceAssignmentRequest := &ResourceAssignmentRequestRequest{
+		Properties: ResourceAssignmentRequestProperties{
 			PrincipalId:                     subjectId,
-			RoleDefinitionId:                roleAssignment.Properties.ExpandedProperties.RoleDefinition.Id,
+			RoleDefinitionId:                resourceAssignment.Properties.ExpandedProperties.RoleDefinition.Id,
 			RequestType:                     "SelfActivate",
-			LinkedRoleEligibilityScheduleId: roleAssignment.Properties.RoleEligibilityScheduleId,
+			LinkedRoleEligibilityScheduleId: resourceAssignment.Properties.RoleEligibilityScheduleId,
 			Justification:                   reason,
 			ScheduleInfo: &ScheduleInfo{
 				StartDateTime: nil,
@@ -238,11 +238,11 @@ func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, dur
 			IsActivativation: true,
 		},
 	}
-	scope := roleAssignment.Properties.ExpandedProperties.Scope.Id[1:]
+	scope := resourceAssignment.Properties.ExpandedProperties.Scope.Id[1:]
 
-	ValidateRoleAssignmentRequest(scope, *roleAssignmentRequest, token)
+	ValidateResourceAssignmentRequest(scope, *resourceAssignmentRequest, token)
 
-	responseModel := &RoleAssignmentRequestResponse{}
+	responseModel := &ResourceAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
 		Url: fmt.Sprintf(
 			"%s/%s/%s/roleAssignmentScheduleRequests/%s",
@@ -254,7 +254,7 @@ func RequestRoleAssignment(subjectId string, roleAssignment *RoleAssignment, dur
 		Token:   token,
 		Method:  "PUT",
 		Params:  params,
-		Payload: roleAssignmentRequest,
+		Payload: resourceAssignmentRequest,
 	}, responseModel)
 
 	return responseModel

@@ -24,44 +24,44 @@ type PIMRequest struct {
 	Params  map[string]string
 }
 
-type RoleExpandedProperty struct {
+type ResourceExpandedProperty struct {
 	Id          string `json:"id"`
 	DisplayName string `json:"displayName"`
 	Type        string `json:"type"`
 	Email       string `json:"email"`
 }
 
-type RoleExpandedProperties struct {
-	Principal      *RoleExpandedProperty `json:"principal"`
-	RoleDefinition *RoleExpandedProperty `json:"roleDefinition"`
-	Scope          *RoleExpandedProperty `json:"scope"`
+type ResourceExpandedProperties struct {
+	Principal      *ResourceExpandedProperty `json:"principal"`
+	RoleDefinition *ResourceExpandedProperty `json:"roleDefinition"`
+	Scope          *ResourceExpandedProperty `json:"scope"`
 }
 
-type RoleProperties struct {
-	RoleEligibilityScheduleId string                  `json:"roleEligibilityScheduleId"`
-	Scope                     string                  `json:"scope"`
-	RoleDefinitionId          string                  `json:"roleDefinitionId"`
-	PrincipalId               string                  `json:"principalId"`
-	PrincipalType             string                  `json:"principalType"`
-	Status                    string                  `json:"status"`
-	StartDateTime             string                  `json:"startDateTime"`
-	EndDateTime               string                  `json:"endDateTime"`
-	MemberType                string                  `json:"memberType"`
-	CreatedOn                 string                  `json:"createdOn"`
-	Condition                 string                  `json:"condition"`
-	ConditionVersion          string                  `json:"conditionVersion"`
-	ExpandedProperties        *RoleExpandedProperties `json:"expandedProperties"`
+type ResourceProperties struct {
+	RoleEligibilityScheduleId string                      `json:"roleEligibilityScheduleId"`
+	Scope                     string                      `json:"scope"`
+	RoleDefinitionId          string                      `json:"roleDefinitionId"`
+	PrincipalId               string                      `json:"principalId"`
+	PrincipalType             string                      `json:"principalType"`
+	Status                    string                      `json:"status"`
+	StartDateTime             string                      `json:"startDateTime"`
+	EndDateTime               string                      `json:"endDateTime"`
+	MemberType                string                      `json:"memberType"`
+	CreatedOn                 string                      `json:"createdOn"`
+	Condition                 string                      `json:"condition"`
+	ConditionVersion          string                      `json:"conditionVersion"`
+	ExpandedProperties        *ResourceExpandedProperties `json:"expandedProperties"`
 }
 
-type RoleAssignment struct {
-	Properties *RoleProperties `json:"properties"`
-	Name       string          `json:"name"`
-	Id         string          `json:"id"`
-	Type       string          `json:"type"`
+type ResourceAssignment struct {
+	Properties *ResourceProperties `json:"properties"`
+	Name       string              `json:"name"`
+	Id         string              `json:"id"`
+	Type       string              `json:"type"`
 }
 
-type RoleAssignmentResponse struct {
-	Value []RoleAssignment `json:"value"`
+type ResourceAssignmentResponse struct {
+	Value []ResourceAssignment `json:"value"`
 }
 
 type GroupAssignmentSubject struct {
@@ -143,31 +143,31 @@ const (
 	StatusTimedOut                    string = "TimedOut"
 )
 
-type RoleAssignmentValidationProperties struct {
-	LinkedRoleEligibilityScheduleId string                  `json:"linkedRoleEligibilityScheduleId"`
-	TargetRoleAssignmentScheduleId  string                  `json:"targetRoleAssignmentScheduleId"`
-	Scope                           string                  `json:"scope"`
-	RoleDefinitionId                string                  `json:"roleDefinitionId"`
-	PrincipalId                     string                  `json:"principalId"`
-	PrincipalType                   string                  `json:"principalType"`
-	RequestType                     string                  `json:"requestType"`
-	Status                          string                  `json:"status"`
-	ScheduleInfo                    *ScheduleInfo           `json:"scheduleInfo"`
-	TicketInfo                      *TicketInfo             `json:"ticketInfo"`
-	Justification                   string                  `json:"justification"`
-	RequestorId                     string                  `json:"requestorId"`
-	CreatedOn                       string                  `json:"createdOn"`
-	ExpandedProperties              *RoleExpandedProperties `json:"expandedProperties"`
+type ResourceAssignmentValidationProperties struct {
+	LinkedRoleEligibilityScheduleId string                      `json:"linkedRoleEligibilityScheduleId"`
+	TargetRoleAssignmentScheduleId  string                      `json:"targetRoleAssignmentScheduleId"`
+	Scope                           string                      `json:"scope"`
+	RoleDefinitionId                string                      `json:"roleDefinitionId"`
+	PrincipalId                     string                      `json:"principalId"`
+	PrincipalType                   string                      `json:"principalType"`
+	RequestType                     string                      `json:"requestType"`
+	Status                          string                      `json:"status"`
+	ScheduleInfo                    *ScheduleInfo               `json:"scheduleInfo"`
+	TicketInfo                      *TicketInfo                 `json:"ticketInfo"`
+	Justification                   string                      `json:"justification"`
+	RequestorId                     string                      `json:"requestorId"`
+	CreatedOn                       string                      `json:"createdOn"`
+	ExpandedProperties              *ResourceExpandedProperties `json:"expandedProperties"`
 }
 
-type RoleAssignmentRequestResponse struct {
-	Properties *RoleAssignmentValidationProperties `json:"properties"`
-	Name       string                              `json:"name"`
-	Id         string                              `json:"id"`
-	Type       string                              `json:"type"`
+type ResourceAssignmentRequestResponse struct {
+	Properties *ResourceAssignmentValidationProperties `json:"properties"`
+	Name       string                                  `json:"name"`
+	Id         string                                  `json:"id"`
+	Type       string                                  `json:"type"`
 }
 
-type RoleAssignmentRequestProperties struct {
+type ResourceAssignmentRequestProperties struct {
 	PrincipalId                     string        `json:"PrincipalId"`
 	RoleDefinitionId                string        `json:"RoleDefinitionId"`
 	RequestType                     string        `json:"RequestType"`
@@ -179,8 +179,8 @@ type RoleAssignmentRequestProperties struct {
 	IsActivativation                bool          `json:"IsActivativation"` // yes, this typo is in the API
 }
 
-type RoleAssignmentRequestRequest struct {
-	Properties RoleAssignmentRequestProperties `json:"Properties"`
+type ResourceAssignmentRequestRequest struct {
+	Properties ResourceAssignmentRequestProperties `json:"Properties"`
 }
 
 type GroupAssignmentSchedule struct {

@@ -20,7 +20,7 @@ var rootCmd = &cobra.Command{
 	Use:   "az-pim-cli",
 	Short: "A utility to list and activate Azure AD PIM roles from the CLI",
 	Long: `az-pim-cli is a utility that allows the user to list and activate eligible role assignments
-	from Azure Entra ID Privileged Identity Management (PIM) directly from the command line`,
+	from Azure Entra ID Privileged Identity Management (PIM) directly from the command line.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
