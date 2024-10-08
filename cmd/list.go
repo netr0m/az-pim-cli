@@ -33,9 +33,9 @@ var listGroupCmd = &cobra.Command{
 	Aliases: []string{"g", "grp", "groups"},
 	Short:   "Query Azure PIM for eligible group assignments",
 	Run: func(cmd *cobra.Command, args []string) {
-		subjectId := pim.GetUserInfo(pimGroupsToken).ObjectId
-		eligibleGroupAssignments := pim.GetEligibleGroupAssignments(pimGroupsToken, subjectId)
-		utils.PrintEligibleGroups(eligibleGroupAssignments)
+		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
+		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, pimGovernanceRoleToken)
+		utils.PrintEligibleGovernanceRoles(eligibleGroupAssignments)
 	},
 }
 
@@ -44,6 +44,6 @@ func init() {
 	listCmd.AddCommand(listResourceCmd)
 	listCmd.AddCommand(listGroupCmd)
 
-	listGroupCmd.PersistentFlags().StringVarP(&pimGroupsToken, "token", "t", "", "An access token for the PIM Groups API (required). Consult the README for more information.")
+	listGroupCmd.PersistentFlags().StringVarP(&pimGovernanceRoleToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
 	listGroupCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
 }

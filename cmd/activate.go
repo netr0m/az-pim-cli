@@ -62,10 +62,10 @@ var activateGroupCmd = &cobra.Command{
 	Aliases: []string{"g", "grp", "groups"},
 	Short:   "Sends a request to Azure PIM to activate the given group",
 	Run: func(cmd *cobra.Command, args []string) {
-		subjectId := pim.GetUserInfo(pimGroupsToken).ObjectId
+		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
 
-		eligibleGroupAssignments := pim.GetEligibleGroupAssignments(pimGroupsToken, subjectId)
-		groupAssignment := utils.GetGroupAssignment(name, prefix, roleName, eligibleGroupAssignments)
+		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, pimGovernanceRoleToken)
+		groupAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleGroupAssignments)
 
 		log.Printf(
 			"Activating role '%s' for group '%s' with reason '%s' (ticket: %s [%s])",
@@ -80,7 +80,7 @@ var activateGroupCmd = &cobra.Command{
 			log.Printf("Skipping activation due to 'dry-run'.")
 			os.Exit(0)
 		}
-		requestResponse := pim.RequestGroupAssignment(subjectId, groupAssignment, duration, reason, ticketSystem, ticketNumber, pimGroupsToken)
+		requestResponse := pim.RequestGovernanceRoleAssignment(subjectId, pim.ROLE_TYPE_AAD_GROUPS, groupAssignment, duration, reason, ticketSystem, ticketNumber, pimGovernanceRoleToken)
 		log.Printf("The role '%s' for group '%s' is now %s", groupAssignment.RoleDefinition.DisplayName, groupAssignment.RoleDefinition.Resource.DisplayName, requestResponse.AssignmentState)
 	},
 }
@@ -100,7 +100,7 @@ func init() {
 	activateCmd.PersistentFlags().StringVarP(&ticketNumber, "ticket-number", "T", "", "Ticket number for the activation")
 	activateCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Display the resource that would be activated, without requesting the activation")
 
-	activateGroupCmd.PersistentFlags().StringVarP(&pimGroupsToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
+	activateGroupCmd.PersistentFlags().StringVarP(&pimGovernanceRoleToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
 	activateGroupCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
 
 	activateCmd.MarkFlagsOneRequired("name", "prefix")

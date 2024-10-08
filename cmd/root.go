@@ -14,7 +14,7 @@ import (
 )
 
 var cfgFile string
-var pimGroupsToken string
+var pimGovernanceRoleToken string
 
 var rootCmd = &cobra.Command{
 	Use:   "az-pim-cli",

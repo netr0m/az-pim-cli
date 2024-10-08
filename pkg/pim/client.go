@@ -121,14 +121,17 @@ func GetEligibleResourceAssignments(token string) *ResourceAssignmentResponse {
 	return responseModel
 }
 
-func GetEligibleGroupAssignments(token string, subjectId string) *GroupAssignmentResponse {
+func GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string) *GovernanceRoleAssignmentResponse {
+	if !IsGovernanceRoleType(roleType) {
+		log.Fatalln("GetEligibleGovernanceRoleAssignments: Invalid role type specified.")
+	}
 	var params = map[string]string{
 		"$expand": "linkedEligibleRoleAssignment,subject,scopedResource,roleDefinition($expand=resource)",
 		"$filter": fmt.Sprintf("(subject/id eq '%s') and (assignmentState eq 'Eligible')", subjectId),
 	}
-	responseModel := &GroupAssignmentResponse{}
+	responseModel := &GovernanceRoleAssignmentResponse{}
 	_ = Request(&PIMRequest{
-		Url:    fmt.Sprintf("%s/%s/aadGroups/roleAssignments", AZ_PIM_GROUP_BASE_URL, AZ_PIM_GROUP_BASE_PATH),
+		Url:    fmt.Sprintf("%s/%s/%s/roleAssignments", AZ_PIM_GOV_ROLE_BASE_URL, AZ_PIM_GOV_ROLE_BASE_PATH, roleType),
 		Token:  token,
 		Method: "GET",
 		Params: params,
@@ -179,35 +182,38 @@ func ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest R
 	return false
 }
 
-func ValidateGroupAssignmentRequest(groupAssignmentRequest GroupAssignmentRequest, token string) bool {
+func ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest GovernanceRoleAssignmentRequest, token string) bool {
+	if !IsGovernanceRoleType(roleType) {
+		log.Fatalln("ValidateGovernanceRoleAssignmentRequest: Invalid role type specified.")
+	}
 	var params = map[string]string{
 		"evaluateOnly": "true",
 	}
 
-	groupAssignmentValidationRequest := groupAssignmentRequest
-	groupAssignmentValidationRequest.Reason = "Evaluate Only"
-	groupAssignmentValidationRequest.TicketNumber = "Evaluate Only"
-	groupAssignmentValidationRequest.TicketSystem = "Evaluate Only"
+	governanceRoleAssignmentValidationRequest := roleAssignmentRequest
+	governanceRoleAssignmentValidationRequest.Reason = "Evaluate Only"
+	governanceRoleAssignmentValidationRequest.TicketNumber = "Evaluate Only"
+	governanceRoleAssignmentValidationRequest.TicketSystem = "Evaluate Only"
 
-	validationResponse := &GroupAssignmentRequestResponse{}
+	validationResponse := &GovernanceRoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
-		Url:     fmt.Sprintf("%s/%s/aadGroups/roleAssignmentRequests", AZ_PIM_GROUP_BASE_URL, AZ_PIM_GROUP_BASE_PATH),
+		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_PIM_GOV_ROLE_BASE_URL, AZ_PIM_GOV_ROLE_BASE_PATH, roleType),
 		Token:   token,
 		Method:  "POST",
 		Params:  params,
-		Payload: groupAssignmentValidationRequest,
+		Payload: governanceRoleAssignmentValidationRequest,
 	}, validationResponse)
 
-	if IsGroupAssignmentRequestFailed(validationResponse) {
-		log.Printf("ERROR: The group assignment validation failed with status '%s', '%s'", validationResponse.Status.Status, validationResponse.Status.SubStatus)
+	if IsGovernanceRoleAssignmentRequestFailed(validationResponse) {
+		log.Printf("ERROR: The role assignment validation failed with status '%s', '%s'", validationResponse.Status.Status, validationResponse.Status.SubStatus)
 		log.Fatalln(validationResponse)
 		return false
 	}
-	if IsGroupAssignmentRequestOK(validationResponse) {
+	if IsGovernanceRoleAssignmentRequestOK(validationResponse) {
 		return true
 	}
-	if IsGroupAssignmentRequestPending(validationResponse) {
-		log.Printf("WARNING: The group assignment request is pending with status '%s', '%s'", validationResponse.Status.Status, validationResponse.Status.SubStatus)
+	if IsGovernanceRoleAssignmentRequestPending(validationResponse) {
+		log.Printf("WARNING: The role assignment request is pending with status '%s', '%s'", validationResponse.Status.Status, validationResponse.Status.SubStatus)
 		return true
 	}
 
@@ -260,34 +266,37 @@ func RequestResourceAssignment(subjectId string, resourceAssignment *ResourceAss
 	return responseModel
 }
 
-func RequestGroupAssignment(subjectId string, groupAssignment *GroupAssignment, duration int, reason string, ticketSystem string, ticketNumber string, token string) *GroupAssignmentRequestResponse {
-	groupAssignmentRequest := &GroupAssignmentRequest{
-		RoleDefinitionId: groupAssignment.RoleDefinitionId,
-		ResourceId:       groupAssignment.ResourceId,
+func RequestGovernanceRoleAssignment(subjectId string, roleType string, governanceRoleAssignment *GovernanceRoleAssignment, duration int, reason string, ticketSystem string, ticketNumber string, token string) *GovernanceRoleAssignmentRequestResponse {
+	if !IsGovernanceRoleType(roleType) {
+		log.Fatalln("RequestGovernanceRoleAssignment: Invalid role type specified.")
+	}
+	governanceRoleAssignmentRequest := &GovernanceRoleAssignmentRequest{
+		RoleDefinitionId: governanceRoleAssignment.RoleDefinitionId,
+		ResourceId:       governanceRoleAssignment.ResourceId,
 		SubjectId:        subjectId,
 		AssignmentState:  "Active",
 		Type:             "UserAdd",
 		Reason:           reason,
 		TicketNumber:     ticketNumber,
 		TicketSystem:     ticketSystem,
-		Schedule: &GroupAssignmentSchedule{
+		Schedule: &GovernanceRoleAssignmentSchedule{
 			Type:          "Once",
 			StartDateTime: nil,
 			EndDateTime:   nil,
 			Duration:      fmt.Sprintf("PT%dM", duration),
 		},
-		LinkedEligibleRoleAssignmentId: groupAssignment.Id,
+		LinkedEligibleRoleAssignmentId: governanceRoleAssignment.Id,
 		ScopedResourceId:               "",
 	}
 
-	ValidateGroupAssignmentRequest(*groupAssignmentRequest, token)
+	ValidateGovernanceRoleAssignmentRequest(roleType, *governanceRoleAssignmentRequest, token)
 
-	responseModel := &GroupAssignmentRequestResponse{}
+	responseModel := &GovernanceRoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
-		Url:     fmt.Sprintf("%s/%s/aadGroups/roleAssignmentRequests", AZ_PIM_GROUP_BASE_URL, AZ_PIM_GROUP_BASE_PATH),
+		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_PIM_GOV_ROLE_BASE_URL, AZ_PIM_GOV_ROLE_BASE_PATH, roleType),
 		Token:   token,
 		Method:  "POST",
-		Payload: groupAssignmentRequest,
+		Payload: governanceRoleAssignmentRequest,
 	}, responseModel)
 
 	return responseModel
