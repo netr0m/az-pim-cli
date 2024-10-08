@@ -24,18 +24,25 @@ var dryRun bool
 var activateCmd = &cobra.Command{
 	Use:     "activate",
 	Aliases: []string{"a", "ac", "act"},
-	Short:   "Sends a request to Azure PIM to activate the given role",
+	Short:   "Send a request to Azure PIM to activate a role assignment",
+	Run:     func(cmd *cobra.Command, args []string) {},
+}
+
+var activateResourceCmd = &cobra.Command{
+	Use:     "resource",
+	Aliases: []string{"r", "res", "resource", "resources", "sub", "subs", "subscriptions"},
+	Short:   "Sends a request to Azure PIM to activate the given resource (azure resources)",
 	Run: func(cmd *cobra.Command, args []string) {
 		token := pim.GetPIMAccessTokenAzureCLI(pim.AZ_PIM_SCOPE)
 		subjectId := pim.GetUserInfo(token).ObjectId
 
-		eligibleRoleAssignments := pim.GetEligibleRoleAssignments(token)
-		roleAssignment := utils.GetRoleAssignment(name, prefix, roleName, eligibleRoleAssignments)
+		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token)
+		resourceAssignment := utils.GetResourceAssignment(name, prefix, roleName, eligibleResourceAssignments)
 
 		log.Printf(
-			"Activating role '%s' in subscription '%s' with reason '%s' (ticket: %s [%s])",
-			roleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName,
-			roleAssignment.Properties.ExpandedProperties.Scope.DisplayName,
+			"Activating role '%s' for resource '%s' with reason '%s' (ticket: %s [%s])",
+			resourceAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName,
+			resourceAssignment.Properties.ExpandedProperties.Scope.DisplayName,
 			reason,
 			ticketNumber,
 			ticketSystem,
@@ -45,8 +52,8 @@ var activateCmd = &cobra.Command{
 			log.Printf("Skipping activation due to 'dry-run'.")
 			os.Exit(0)
 		}
-		requestResponse := pim.RequestRoleAssignment(subjectId, roleAssignment, duration, reason, ticketSystem, ticketNumber, token)
-		log.Printf("The role '%s' in '%s' is now %s", roleAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName, roleAssignment.Properties.ExpandedProperties.Scope.DisplayName, requestResponse.Properties.Status)
+		requestResponse := pim.RequestResourceAssignment(subjectId, resourceAssignment, duration, reason, ticketSystem, ticketNumber, token)
+		log.Printf("The role '%s' in '%s' is now %s", resourceAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName, resourceAssignment.Properties.ExpandedProperties.Scope.DisplayName, requestResponse.Properties.Status)
 	},
 }
 
@@ -80,6 +87,7 @@ var activateGroupCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(activateCmd)
+	activateCmd.AddCommand(activateResourceCmd)
 	activateCmd.AddCommand(activateGroupCmd)
 
 	// Flags
@@ -92,7 +100,7 @@ func init() {
 	activateCmd.PersistentFlags().StringVarP(&ticketNumber, "ticket-number", "T", "", "Ticket number for the activation")
 	activateCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Display the resource that would be activated, without requesting the activation")
 
-	activateGroupCmd.PersistentFlags().StringVarP(&pimGroupsToken, "token", "t", "", "An access token for the PIM Groups API (required). Consult the README for more information.")
+	activateGroupCmd.PersistentFlags().StringVarP(&pimGroupsToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
 	activateGroupCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
 
 	activateCmd.MarkFlagsOneRequired("name", "prefix")

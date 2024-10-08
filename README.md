@@ -4,6 +4,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/netr0m/az-pim-cli.svg)](https://pkg.go.dev/github.com/netr0m/az-pim-cli)
 
 `az-pim-cli` eases the process of listing and activating Azure PIM roles by allowing activation via the command line. Authentication is handled with the `azure.identity` library by utilizing the `AzureCLICredential` method.
+It currently supports ['azure resources'](#azure-resources) and ['groups'](#groups).
 
 ## Install
 ### Install with `go install`
@@ -35,13 +36,13 @@ This tool depends on [`az-cli`](https://learn.microsoft.com/en-us/cli/azure/) fo
 ```bash
 $ az-pim-cli --help
 az-pim-cli is a utility that allows the user to list and activate eligible role assignments
-        from Azure Entra ID Privileged Identity Management (PIM) directly from the command line
+        from Azure Entra ID Privileged Identity Management (PIM) directly from the command line.
 
 Usage:
   az-pim-cli [command]
 
 Available Commands:
-  activate    Sends a request to Azure PIM to activate the given role
+  activate    Send a request to Azure PIM to activate a role assignment
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
   list        Query Azure PIM for eligible role assignments
@@ -55,35 +56,35 @@ Use "az-pim-cli [command] --help" for more information about a command.
 
 ```
 
-### List eligible role assignments (Azure resources)
+### List eligible role assignments
+
+#### Azure resources
+> List [azure resources](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/azurerbac)
+
 ```bash
-$ az-pim-cli list --help
-Query Azure PIM for eligible role assignments
+$ az-pim-cli list resources --help
+Query Azure PIM for eligible resource assignments (azure resources)
 
 Usage:
-  az-pim-cli list [flags]
-  az-pim-cli list [command]
+  az-pim-cli list resource [flags]
 
 Aliases:
-  list, l, ls
-
-Available Commands:
-  group       Query Azure PIM for eligible group assignments
+  resource, r, res, resource, resources, sub, subs, subscriptions
 
 Flags:
-  -h, --help   help for list
+  -h, --help   help for resource
 
 Global Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
 
-Use "az-pim-cli list [command] --help" for more information about a command.
-
 ```
 
-### List eligible group assignments (Entra Groups)
+#### Groups
+> List [groups](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup)
 > :warning: Requires an access token with the appropriate scope. See [Token for Entra ID Groups](#token-for-entra-id-groups) for more details.
+
 ```bash
-$ az-pim-cli list group --help
+$ az-pim-cli list groups --help
 Query Azure PIM for eligible group assignments
 
 Usage:
@@ -101,25 +102,28 @@ Global Flags:
 
 ```
 
-### Activate a role (Azure resources)
+### Activate a role
+
+#### Azure resources
+> Activate [azure resources](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/azurerbac)
+
 ```bash
-$ az-pim-cli activate --help
-Sends a request to Azure PIM to activate the given role
+$ az-pim-cli activate resource --help
+Sends a request to Azure PIM to activate the given resource (azure resources)
 
 Usage:
-  az-pim-cli activate [flags]
-  az-pim-cli activate [command]
+  az-pim-cli activate resource [flags]
 
 Aliases:
-  activate, a, ac, act
-
-Available Commands:
-  group       Sends a request to Azure PIM to activate the given group
+  resource, r, res, resource, resources, sub, subs, subscriptions
 
 Flags:
+  -h, --help   help for resource
+
+Global Flags:
+  -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
       --dry-run                Display the resource that would be activated, without requesting the activation
   -d, --duration int           Duration in minutes that the role should be activated for (default 480)
-  -h, --help                   help for activate
   -n, --name string            The name of the resource to activate
   -p, --prefix string          The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
       --reason string          Reason for the activation (default "config")
@@ -127,15 +131,12 @@ Flags:
   -T, --ticket-number string   Ticket number for the activation
       --ticket-system string   Ticket system for the activation
 
-Global Flags:
-  -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
-
-Use "az-pim-cli activate [command] --help" for more information about a command.
-
 ```
 
-### Activate a role (Entra Groups)
+#### Groups
+> Activate [groups](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup)
 > :warning: Requires an access token with the appropriate scope. See [Token for Entra ID Groups](#token-for-entra-id-groups) for more details.
+
 ```bash
 $ az-pim-cli activate group --help
 Sends a request to Azure PIM to activate the given group
@@ -148,7 +149,7 @@ Aliases:
 
 Flags:
   -h, --help           help for group
-  -t, --token string   An access token for the PIM Groups API (required). Consult the README for more information.
+  -t, --token string   An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.
 
 Global Flags:
   -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
@@ -167,30 +168,30 @@ Global Flags:
 #### Azure resources
 ```bash
 # List eligible Azure resource role assignments
-$ az-pim-cli list
+$ az-pim-cli list resources
 == S100-Example-Subscription ==
          - Contributor
          - Owner
 == S1337-Another-Subscription ==
          - Contributor
 
-# Activate the first matching role in a subscription with the prefix 'S100'
-$ az-pim-cli activate --prefix S100
-2024/05/31 15:05:25 Activating role 'Contributor' in subscription 'S100-Example-Subscription' with reason 'config' (ticket:  [])
+# Activate the first matching role for a resource with the prefix 'S100'
+$ az-pim-cli activate resource --prefix S100
+2024/05/31 15:05:25 Activating role 'Contributor' for resource 'S100-Example-Subscription' with reason 'config' (ticket:  [])
 2024/05/31 15:05:34 The role 'Contributor' in 'S100-Example-Subscription' is now Provisioned
 
-# Activate a specific role ('Owner') in a subscription with the prefix 's100'
-$ az-pim-cli activate --prefix s100 --role owner
-2024/05/31 15:06:25 Activating role 'Owner' in subscription 'S100-Example-Subscription' with reason 'config' (ticket:  [])
+# Activate a specific role ('Owner') for a resource with the prefix 's100'
+$ az-pim-cli activate resource --prefix s100 --role owner
+2024/05/31 15:06:25 Activating role 'Owner' for resource 'S100-Example-Subscription' with reason 'config' (ticket:  [])
 2024/05/31 15:06:34 The role 'Owner' in 'S100-Example-Subscription' is now Provisioned
 
 # Activate a role and specify a ticket number for the activation
-$ az-pim-cli activate --name S100-Example-Subscription --role Owner --ticket-system Jira --ticket-number T-1337
-2024/05/31 15:06:25 Activating role 'Owner' in subscription 'S100-Example-Subscription' with reason 'config' (ticket: T-1337 [Jira])
+$ az-pim-cli activate resource --name S100-Example-Subscription --role Owner --ticket-system Jira --ticket-number T-1337
+2024/05/31 15:06:25 Activating role 'Owner' for resource 'S100-Example-Subscription' with reason 'config' (ticket: T-1337 [Jira])
 2024/05/31 15:06:34 The role 'Owner' in 'S100-Example-Subscription' is now Provisioned
 ```
 
-#### Entra groups
+#### Groups
 ```bash
 # List eligible group assignments
 $ az-pim-cli list groups
