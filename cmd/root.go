@@ -72,7 +72,9 @@ func initConfig() {
 	bindFlags(rootCmd, vpr)
 	bindFlags(activateCmd, vpr)
 	bindFlags(listGroupCmd, vpr)
+	bindFlags(listEntraRoleCmd, vpr)
 	bindFlags(activateGroupCmd, vpr)
+	bindFlags(activateEntraRoleCmd, vpr)
 }
 
 func bindFlags(cmd *cobra.Command, vpr *viper.Viper) {
