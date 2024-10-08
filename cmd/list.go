@@ -39,11 +39,25 @@ var listGroupCmd = &cobra.Command{
 	},
 }
 
+var listEntraRoleCmd = &cobra.Command{
+	Use:     "role",
+	Aliases: []string{"rl", "role", "roles"},
+	Short:   "Query Azure PIM for eligible Entra role assignments",
+	Run: func(cmd *cobra.Command, args []string) {
+		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
+		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments("aadroles", subjectId, pimGovernanceRoleToken)
+		utils.PrintEligibleGovernanceRoles(eligibleEntraRoleAssignments)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(listCmd)
 	listCmd.AddCommand(listResourceCmd)
 	listCmd.AddCommand(listGroupCmd)
+	listCmd.AddCommand(listEntraRoleCmd)
 
 	listGroupCmd.PersistentFlags().StringVarP(&pimGovernanceRoleToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
 	listGroupCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
+	listEntraRoleCmd.PersistentFlags().StringVarP(&pimGovernanceRoleToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
+	listEntraRoleCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
 }
