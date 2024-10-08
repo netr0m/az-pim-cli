@@ -31,20 +31,20 @@ func PrintEligibleResources(resourceAssignments *pim.ResourceAssignmentResponse)
 	}
 }
 
-func PrintEligibleGroups(groupAssignments *pim.GroupAssignmentResponse) {
-	var eligibleGroups = make(map[string][]string)
+func PrintEligibleGovernanceRoles(governanceRoleAssignments *pim.GovernanceRoleAssignmentResponse) {
+	var eligibleGovernanceRoles = make(map[string][]string)
 
-	for _, groupAssignment := range groupAssignments.Value {
-		groupName := groupAssignment.RoleDefinition.Resource.DisplayName
-		roleName := groupAssignment.RoleDefinition.DisplayName
-		if _, ok := eligibleGroups[groupName]; !ok {
-			eligibleGroups[groupName] = []string{}
+	for _, governanceRoleAssignment := range governanceRoleAssignments.Value {
+		governanceRoleName := governanceRoleAssignment.RoleDefinition.Resource.DisplayName
+		roleName := governanceRoleAssignment.RoleDefinition.DisplayName
+		if _, ok := eligibleGovernanceRoles[governanceRoleName]; !ok {
+			eligibleGovernanceRoles[governanceRoleName] = []string{}
 		}
-		eligibleGroups[groupName] = append(eligibleGroups[groupName], roleName)
+		eligibleGovernanceRoles[governanceRoleName] = append(eligibleGovernanceRoles[governanceRoleName], roleName)
 	}
 
-	for grp, rol := range eligibleGroups {
-		fmt.Printf("== %s ==\n", grp)
+	for govRole, rol := range eligibleGovernanceRoles {
+		fmt.Printf("== %s ==\n", govRole)
 		for role := range rol {
 			fmt.Printf("\t - %s\n", rol[role])
 		}
@@ -84,35 +84,35 @@ func GetResourceAssignment(name string, prefix string, role string, eligibleReso
 	return nil
 }
 
-func GetGroupAssignment(name string, prefix string, role string, eligibleGroupAssignments *pim.GroupAssignmentResponse) *pim.GroupAssignment {
+func GetGovernanceRoleAssignment(name string, prefix string, role string, eligibleGovernanceRoleAssignments *pim.GovernanceRoleAssignmentResponse) *pim.GovernanceRoleAssignment {
 	name = strings.ToLower(name)
 	prefix = strings.ToLower(prefix)
 	role = strings.ToLower(role)
-	for _, eligibleGroupAssignment := range eligibleGroupAssignments.Value {
-		var match *pim.GroupAssignment = nil
-		currentGroupName := strings.ToLower(eligibleGroupAssignment.RoleDefinition.Resource.DisplayName)
+	for _, eligibleGovernanceRoleAssignment := range eligibleGovernanceRoleAssignments.Value {
+		var match *pim.GovernanceRoleAssignment = nil
+		currentGovernanceRoleName := strings.ToLower(eligibleGovernanceRoleAssignment.RoleDefinition.Resource.DisplayName)
 
 		if len(prefix) != 0 {
-			if strings.HasPrefix(currentGroupName, prefix) {
-				match = &eligibleGroupAssignment // #nosec G601 false positive with go >= v1.22
+			if strings.HasPrefix(currentGovernanceRoleName, prefix) {
+				match = &eligibleGovernanceRoleAssignment // #nosec G601 false positive with go >= v1.22
 			}
 		} else if len(name) != 0 {
-			if currentGroupName == name {
-				match = &eligibleGroupAssignment // #nosec G601 false positive with go >= v1.22
+			if currentGovernanceRoleName == name {
+				match = &eligibleGovernanceRoleAssignment // #nosec G601 false positive with go >= v1.22
 			}
 		}
 
 		if match != nil {
 			if role == "" {
-				return &eligibleGroupAssignment
+				return &eligibleGovernanceRoleAssignment
 			}
-			if strings.ToLower(eligibleGroupAssignment.RoleDefinition.DisplayName) == role {
-				return &eligibleGroupAssignment
+			if strings.ToLower(eligibleGovernanceRoleAssignment.RoleDefinition.DisplayName) == role {
+				return &eligibleGovernanceRoleAssignment
 			}
 		}
 	}
 
-	log.Fatalln("Unable to find a group assignment matching the parameters.")
+	log.Fatalln("Unable to find a role assignment matching the parameters.")
 
 	return nil
 }

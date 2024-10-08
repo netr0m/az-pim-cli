@@ -14,7 +14,7 @@ import (
 )
 
 var cfgFile string
-var pimGroupsToken string
+var pimGovernanceRoleToken string
 
 var rootCmd = &cobra.Command{
 	Use:   "az-pim-cli",
@@ -72,7 +72,9 @@ func initConfig() {
 	bindFlags(rootCmd, vpr)
 	bindFlags(activateCmd, vpr)
 	bindFlags(listGroupCmd, vpr)
+	bindFlags(listEntraRoleCmd, vpr)
 	bindFlags(activateGroupCmd, vpr)
+	bindFlags(activateEntraRoleCmd, vpr)
 }
 
 func bindFlags(cmd *cobra.Command, vpr *viper.Viper) {
