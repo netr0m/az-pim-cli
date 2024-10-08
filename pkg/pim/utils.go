@@ -11,7 +11,7 @@ func IsResourceAssignmentRequestFailed(requestResponse *ResourceAssignmentReques
 	return false
 }
 
-func IsGroupAssignmentRequestFailed(requestResponse *GroupAssignmentRequestResponse) bool {
+func IsGovernanceRoleAssignmentRequestFailed(requestResponse *GovernanceRoleAssignmentRequestResponse) bool {
 	switch requestResponse.Status.SubStatus {
 	case StatusAdminDenied, StatusCanceled, StatusDenied, StatusFailed, StatusFailedAsResourceIsLocked, StatusInvalid, StatusRevoked, StatusTimedOut:
 		return true
@@ -27,7 +27,7 @@ func IsResourceAssignmentRequestPending(requestResponse *ResourceAssignmentReque
 	return false
 }
 
-func IsGroupAssignmentRequestPending(requestResponse *GroupAssignmentRequestResponse) bool {
+func IsGovernanceRoleAssignmentRequestPending(requestResponse *GovernanceRoleAssignmentRequestResponse) bool {
 	switch requestResponse.Status.SubStatus {
 	case StatusPendingAdminDecision, StatusPendingApproval, StatusPendingApprovalProvisioning, StatusPendingEvaluation, StatusPendingExternalProvisioning, StatusPendingProvisioning, StatusPendingRevocation, StatusPendingScheduleCreation:
 		return true
@@ -43,9 +43,17 @@ func IsResourceAssignmentRequestOK(requestResponse *ResourceAssignmentRequestRes
 	return false
 }
 
-func IsGroupAssignmentRequestOK(requestResponse *GroupAssignmentRequestResponse) bool {
+func IsGovernanceRoleAssignmentRequestOK(requestResponse *GovernanceRoleAssignmentRequestResponse) bool {
 	switch requestResponse.Status.SubStatus {
 	case StatusAccepted, StatusAdminApproved, StatusGranted, StatusProvisioned, StatusProvisioningStarted, StatusScheduleCreated:
+		return true
+	}
+	return false
+}
+
+func IsGovernanceRoleType(roleType string) bool {
+	switch roleType {
+	case ROLE_TYPE_AAD_GROUPS, ROLE_TYPE_ENTRA_ROLES:
 		return true
 	}
 	return false
