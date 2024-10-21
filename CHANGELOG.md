@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0](https://github.com/netr0m/az-pim-cli/compare/v1.1.0...v1.2.0) (2024-10-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* use proper terms for 'azure resources' type ([#59](https://github.com/netr0m/az-pim-cli/issues/59))
+
+### Features
+
+* use proper terms for 'azure resources' type ([#59](https://github.com/netr0m/az-pim-cli/issues/59)) ([6411902](https://github.com/netr0m/az-pim-cli/commit/641190289f99d2599d7dd789c5c3ea10845746ae))
+
 ## [1.1.0](https://github.com/netr0m/az-pim-cli/compare/v1.0.1...v1.1.0) (2024-09-13)
 
 
