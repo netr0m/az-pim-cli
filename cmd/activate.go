@@ -108,7 +108,7 @@ var activateEntraRoleCmd = &cobra.Command{
 			log.Printf("Skipping activation due to 'dry-run'.")
 			os.Exit(0)
 		}
-		requestResponse := pim.RequestGovernanceRoleAssignment(subjectId, pim.ROLE_TYPE_AAD_GROUPS, entraRoleAssignment, duration, reason, ticketSystem, ticketNumber, pimGovernanceRoleToken)
+		requestResponse := pim.RequestGovernanceRoleAssignment(subjectId, pim.ROLE_TYPE_ENTRA_ROLES, entraRoleAssignment, duration, reason, ticketSystem, ticketNumber, pimGovernanceRoleToken)
 		log.Printf("The role '%s' for Entra role '%s' is now %s", entraRoleAssignment.RoleDefinition.DisplayName, entraRoleAssignment.RoleDefinition.Resource.DisplayName, requestResponse.AssignmentState)
 	},
 }
