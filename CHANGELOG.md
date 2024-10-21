@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/netr0m/az-pim-cli/compare/v1.2.0...v1.3.0) (2024-10-21)
+
+
+### Features
+
+* Support for Entra roles ([#61](https://github.com/netr0m/az-pim-cli/issues/61)) ([dd9ed19](https://github.com/netr0m/az-pim-cli/commit/dd9ed193c7bee3a85ad3cc62ada4bc2630378393))
+
 ## [1.2.0](https://github.com/netr0m/az-pim-cli/compare/v1.1.0...v1.2.0) (2024-10-21)
 
 
