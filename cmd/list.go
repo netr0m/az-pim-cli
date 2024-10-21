@@ -45,7 +45,7 @@ var listEntraRoleCmd = &cobra.Command{
 	Short:   "Query Azure PIM for eligible Entra role assignments",
 	Run: func(cmd *cobra.Command, args []string) {
 		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
-		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments("aadroles", subjectId, pimGovernanceRoleToken)
+		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_ENTRA_ROLES, subjectId, pimGovernanceRoleToken)
 		utils.PrintEligibleGovernanceRoles(eligibleEntraRoleAssignments)
 	},
 }
