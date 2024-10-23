@@ -10,12 +10,15 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/netr0m/az-pim-cli/pkg/common"
 )
 
 func GetPIMAccessTokenAzureCLI(scope string) string {
@@ -30,7 +33,14 @@ func GetPIMAccessTokenAzureCLI(scope string) string {
 	}
 	token, err := cred.GetToken(context.Background(), tokenOpts)
 	if err != nil {
-		log.Fatalln(err)
+		error := common.Error{
+			Operation: "GetPIMAccessTokenAzureCLI",
+			Message:   err.Error(),
+			Status:    "401",
+			Err:       err,
+		}
+		slog.Error(error.Error())
+		os.Exit(1)
 	}
 
 	return token.Token
