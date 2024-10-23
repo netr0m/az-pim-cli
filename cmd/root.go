@@ -8,11 +8,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/netr0m/az-pim-cli/pkg/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
+var debugLogging bool
 var cfgFile string
 var pimGovernanceRoleToken string
 
@@ -36,6 +38,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	// Global flags
+	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Enable debug logging")
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.az-pim-cli.yaml)")
 }
 
@@ -75,6 +78,8 @@ func initConfig() {
 	bindFlags(listEntraRoleCmd, vpr)
 	bindFlags(activateGroupCmd, vpr)
 	bindFlags(activateEntraRoleCmd, vpr)
+
+	common.InitLogger(debugLogging)
 }
 
 func bindFlags(cmd *cobra.Command, vpr *viper.Viper) {
