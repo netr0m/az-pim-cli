@@ -288,6 +288,15 @@ $ az-pim-cli activate role --name "my-entra-id-role" --role "Contributor" --dura
 2024/05/31 15:00:10 Activating role 'Contributor' for Entra role 'my-entra-id-role' with reason 'config' (ticket:  [])
 2024/05/31 15:00:23 The role 'Contributor' for Entra role 'my-entra-id-role' is now Active
 ```
+### Troubleshooting
+
+#### Error: The following policy rules failed: [\"ExpirationRule\"]"
+
+Make sure you set duration (e.g. --duration 30) when activate the group, resource or role.
+
+#### Error: The following policy rules failed: [\"TicketingRule\"]"
+
+Make sure you set ticket number (e.g. -T "ticket") when activate the group, resource or role.
 
 ### Configuration options
 
