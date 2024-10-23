@@ -276,7 +276,7 @@ $ az-pim-cli activate group --name my-entra-id-group --duration 5
 $ az-pim-cli list roles
 == my-entra-id-role ==
          - Owner
-         - contributor
+         - Contributor
 
 # Activate the first matching role for the Entra role 'my-entra-id-role'
 $ az-pim-cli activate role --name "my-entra-id-role" --duration 30
