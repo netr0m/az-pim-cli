@@ -5,9 +5,11 @@ package utils
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
+	"os"
 	"strings"
 
+	"github.com/netr0m/az-pim-cli/pkg/common"
 	"github.com/netr0m/az-pim-cli/pkg/pim"
 )
 
@@ -79,7 +81,13 @@ func GetResourceAssignment(name string, prefix string, role string, eligibleReso
 		}
 	}
 
-	log.Fatalln("Unable to find a resource assignment matching the parameters.")
+	var _error = common.Error{
+		Operation: "GetResourceAssignment",
+		Message:   "Unable to find a resource assignment matching the parameters",
+		Status:    "404",
+	}
+	slog.Error(_error.Error())
+	os.Exit(1)
 
 	return nil
 }
@@ -112,7 +120,13 @@ func GetGovernanceRoleAssignment(name string, prefix string, role string, eligib
 		}
 	}
 
-	log.Fatalln("Unable to find a role assignment matching the parameters.")
+	var _error = common.Error{
+		Operation: "GetGovernanceRoleAssignment",
+		Message:   "Unable to find a role assignment matching the parameters",
+		Status:    "404",
+	}
+	slog.Error(_error.Error())
+	os.Exit(1)
 
 	return nil
 }
