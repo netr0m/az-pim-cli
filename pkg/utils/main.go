@@ -17,6 +17,7 @@ func PrintEligibleResources(resourceAssignments *pim.ResourceAssignmentResponse)
 	var eligibleResources = make(map[string][]string)
 
 	for _, ras := range resourceAssignments.Value {
+		slog.Debug(ras.Debug())
 		resourceName := ras.Properties.ExpandedProperties.Scope.DisplayName
 		roleName := ras.Properties.ExpandedProperties.RoleDefinition.DisplayName
 		if _, ok := eligibleResources[resourceName]; !ok {
@@ -37,6 +38,7 @@ func PrintEligibleGovernanceRoles(governanceRoleAssignments *pim.GovernanceRoleA
 	var eligibleGovernanceRoles = make(map[string][]string)
 
 	for _, governanceRoleAssignment := range governanceRoleAssignments.Value {
+		slog.Debug(governanceRoleAssignment.Debug())
 		governanceRoleName := governanceRoleAssignment.RoleDefinition.Resource.DisplayName
 		roleName := governanceRoleAssignment.RoleDefinition.DisplayName
 		if _, ok := eligibleGovernanceRoles[governanceRoleName]; !ok {
