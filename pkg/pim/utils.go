@@ -5,7 +5,11 @@ package pim
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"strings"
+
+	"github.com/netr0m/az-pim-cli/pkg/common"
 )
 
 func IsResourceAssignmentRequestFailed(requestResponse *ResourceAssignmentRequestResponse) bool {
@@ -62,6 +66,113 @@ func IsGovernanceRoleType(roleType string) bool {
 		return true
 	}
 	return false
+}
+
+func (response *ResourceAssignmentRequestResponse) CheckResourceAssignmentResult(request *ResourceAssignmentRequestRequest) bool {
+	if IsResourceAssignmentRequestFailed(response) {
+		_error := common.Error{
+			Operation: "CheckResourceAssignmentResult",
+			Message:   "The role assignment validation failed",
+			Status:    response.Properties.Status,
+			Request:   request,
+			Response:  response,
+		}
+		slog.Error(_error.Error())
+		slog.Debug(_error.Debug())
+		return false
+	}
+	if IsResourceAssignmentRequestOK(response) {
+		slog.Info("The role assignment request was successful", "status", response.Properties.Status)
+		return true
+	}
+	if IsResourceAssignmentRequestPending(response) {
+		slog.Warn("The role assignment request is pending", "status", response.Properties.Status)
+		return true
+	}
+
+	return false
+}
+
+func (response *GovernanceRoleAssignmentRequestResponse) CheckGovernanceRoleAssignmentResult(request *GovernanceRoleAssignmentRequest) bool {
+	if IsGovernanceRoleAssignmentRequestFailed(response) {
+		_error := common.Error{
+			Operation: "CheckGovernanceRoleAssignmentResult",
+			Message:   "The role assignment validation failed",
+			Status:    response.Status.Status,
+			Request:   request,
+			Response:  response,
+		}
+		slog.Error(_error.Error())
+		slog.Debug(_error.Debug())
+		return false
+	}
+	if IsGovernanceRoleAssignmentRequestOK(response) {
+		slog.Info("The role assignment request was successfully validated", "status", response.Status.Status, "subStatus", response.Status.SubStatus)
+		return true
+	}
+	if IsGovernanceRoleAssignmentRequestPending(response) {
+		slog.Warn("The role assignment request is pending", "status", response.Status.Status, "subStatus", response.Status.SubStatus)
+		return true
+	}
+
+	return false
+}
+
+func CreateResourceAssignmentRequest(subjectId string, resourceAssignment *ResourceAssignment, duration int, reason string, ticketSystem string, ticketNumber string) (string, *ResourceAssignmentRequestRequest) {
+	resourceAssignmentRequest := &ResourceAssignmentRequestRequest{
+		Properties: ResourceAssignmentRequestProperties{
+			PrincipalId:                     subjectId,
+			RoleDefinitionId:                resourceAssignment.Properties.ExpandedProperties.RoleDefinition.Id,
+			RequestType:                     "SelfActivate",
+			LinkedRoleEligibilityScheduleId: resourceAssignment.Properties.RoleEligibilityScheduleId,
+			Justification:                   reason,
+			ScheduleInfo: &ScheduleInfo{
+				StartDateTime: nil,
+				Expiration: &ScheduleInfoExpiration{
+					Type:     "AfterDuration",
+					Duration: fmt.Sprintf("PT%dM", duration),
+				},
+			},
+			TicketInfo:       &TicketInfo{TicketNumber: ticketNumber, TicketSystem: ticketSystem},
+			IsValidationOnly: false,
+			IsActivativation: true,
+		},
+	}
+	scope := resourceAssignment.Properties.ExpandedProperties.Scope.Id[1:]
+
+	return scope, resourceAssignmentRequest
+}
+
+func CreateGovernanceRoleAssignmentRequest(subjectId string, roleType string, governanceRoleAssignment *GovernanceRoleAssignment, duration int, reason string, ticketSystem string, ticketNumber string) (string, *GovernanceRoleAssignmentRequest) {
+	if !IsGovernanceRoleType(roleType) {
+		_error := common.Error{
+			Operation: "CreateGovernanceRoleAssignmentRequest",
+			Message:   "Invalid role type specified.",
+		}
+		slog.Error(_error.Error())
+		os.Exit(1)
+	}
+
+	governanceRoleAssignmentRequest := &GovernanceRoleAssignmentRequest{
+		RoleDefinitionId: governanceRoleAssignment.RoleDefinitionId,
+		ResourceId:       governanceRoleAssignment.ResourceId,
+		SubjectId:        subjectId,
+		AssignmentState:  "Active",
+		Type:             "UserAdd",
+		Reason:           reason,
+		TicketNumber:     ticketNumber,
+		TicketSystem:     ticketSystem,
+		Schedule: &GovernanceRoleAssignmentSchedule{
+			Type:          "Once",
+			StartDateTime: nil,
+			EndDateTime:   nil,
+			Duration:      fmt.Sprintf("PT%dM", duration),
+		},
+		LinkedEligibleRoleAssignmentId: governanceRoleAssignment.Id,
+		ScopedResourceId:               "",
+	}
+
+	return roleType, governanceRoleAssignmentRequest
 }
 
 func (resourceAssignment *ResourceAssignment) Debug() string {

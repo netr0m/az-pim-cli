@@ -21,6 +21,7 @@ var reason string
 var ticketSystem string
 var ticketNumber string
 var dryRun bool
+var validateOnly bool
 
 var activateCmd = &cobra.Command{
 	Use:     "activate",
@@ -34,11 +35,12 @@ var activateResourceCmd = &cobra.Command{
 	Aliases: []string{"r", "res", "resource", "resources", "sub", "subs", "subscriptions"},
 	Short:   "Sends a request to Azure PIM to activate the given resource (azure resources)",
 	Run: func(cmd *cobra.Command, args []string) {
-		token := pim.GetPIMAccessTokenAzureCLI(pim.AZ_PIM_SCOPE)
+		token := pim.GetAccessToken(pim.AZ_PIM_SCOPE, pim.AzureClient{})
 		subjectId := pim.GetUserInfo(token).ObjectId
 
-		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token)
+		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token, pim.AzureClient{})
 		resourceAssignment := utils.GetResourceAssignment(name, prefix, roleName, eligibleResourceAssignments)
+		scope, assignmentRequest := pim.CreateResourceAssignmentRequest(subjectId, resourceAssignment, duration, reason, ticketSystem, ticketNumber)
 
 		slog.Info(
 			"Requesting activation",
@@ -53,7 +55,15 @@ var activateResourceCmd = &cobra.Command{
 			slog.Warn("Skipping activation due to '--dry-run'")
 			os.Exit(0)
 		}
-		requestResponse := pim.RequestResourceAssignment(subjectId, resourceAssignment, duration, reason, ticketSystem, ticketNumber, token)
+		if validateOnly {
+			slog.Warn("Running validation only")
+			validationSuccessful := pim.ValidateResourceAssignmentRequest(scope, assignmentRequest, token, pim.AzureClient{})
+			if validationSuccessful {
+				os.Exit(0)
+			}
+			os.Exit(1)
+		}
+		requestResponse := pim.RequestResourceAssignment(scope, assignmentRequest, token, pim.AzureClient{})
 		slog.Info(
 			"Request completed",
 			"role", resourceAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName,
@@ -63,36 +73,53 @@ var activateResourceCmd = &cobra.Command{
 	},
 }
 
+func activateGovernanceRole(roleType string) {
+	if !pim.IsGovernanceRoleType(roleType) {
+		slog.Error("Invalid role type specified.")
+		os.Exit(1)
+	}
+	subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
+	eligibleAssignments := pim.GetEligibleGovernanceRoleAssignments(roleType, subjectId, pimGovernanceRoleToken, pim.AzureClient{})
+	roleAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleAssignments)
+	roleType, assignmentRequest := pim.CreateGovernanceRoleAssignmentRequest(subjectId, roleType, roleAssignment, duration, reason, ticketSystem, ticketNumber)
+
+	slog.Info(
+		"Requesting activation",
+		"role", roleAssignment.RoleDefinition.DisplayName,
+		"scope", roleAssignment.RoleDefinition.Resource.DisplayName,
+		"reason", reason,
+		"ticketNumber", ticketNumber,
+		"ticketSystem", ticketSystem,
+	)
+
+	if dryRun {
+		slog.Warn("Skipping activation due to '--dry-run'")
+		os.Exit(0)
+	}
+	if validateOnly {
+		slog.Warn("Running validation only")
+		validationSuccessful := pim.ValidateGovernanceRoleAssignmentRequest(roleType, assignmentRequest, pimGovernanceRoleToken, pim.AzureClient{})
+		if validationSuccessful {
+			os.Exit(0)
+		}
+		os.Exit(1)
+	}
+	requestResponse := pim.RequestGovernanceRoleAssignment(roleType, assignmentRequest, pimGovernanceRoleToken, pim.AzureClient{})
+	slog.Info(
+		"Request completed",
+		"role", roleAssignment.RoleDefinition.DisplayName,
+		"scope", roleAssignment.RoleDefinition.Resource.DisplayName,
+		"status", requestResponse.AssignmentState,
+	)
+
+}
+
 var activateGroupCmd = &cobra.Command{
 	Use:     "group",
 	Aliases: []string{"g", "grp", "groups"},
 	Short:   "Sends a request to Azure PIM to activate the given group",
 	Run: func(cmd *cobra.Command, args []string) {
-		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
-
-		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, pimGovernanceRoleToken)
-		groupAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleGroupAssignments)
-
-		slog.Info(
-			"Requesting activation",
-			"role", groupAssignment.RoleDefinition.DisplayName,
-			"scope", groupAssignment.RoleDefinition.Resource.DisplayName,
-			"reason", reason,
-			"ticketNumber", ticketNumber,
-			"ticketSystem", ticketSystem,
-		)
-
-		if dryRun {
-			slog.Warn("Skipping activation due to '--dry-run'")
-			os.Exit(0)
-		}
-		requestResponse := pim.RequestGovernanceRoleAssignment(subjectId, pim.ROLE_TYPE_AAD_GROUPS, groupAssignment, duration, reason, ticketSystem, ticketNumber, pimGovernanceRoleToken)
-		slog.Info(
-			"Request completed",
-			"role", groupAssignment.RoleDefinition.DisplayName,
-			"scope", groupAssignment.RoleDefinition.Resource.DisplayName,
-			"status", requestResponse.AssignmentState,
-		)
+		activateGovernanceRole(pim.ROLE_TYPE_AAD_GROUPS)
 	},
 }
 
@@ -101,31 +128,7 @@ var activateEntraRoleCmd = &cobra.Command{
 	Aliases: []string{"rl", "role", "roles"},
 	Short:   "Sends a request to Azure PIM to activate the given Entra role",
 	Run: func(cmd *cobra.Command, args []string) {
-		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
-
-		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_ENTRA_ROLES, subjectId, pimGovernanceRoleToken)
-		entraRoleAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleEntraRoleAssignments)
-
-		slog.Info(
-			"Requesting activation",
-			"role", entraRoleAssignment.RoleDefinition.DisplayName,
-			"scope", entraRoleAssignment.RoleDefinition.Resource.DisplayName,
-			"reason", reason,
-			"ticketNumber", ticketNumber,
-			"ticketSystem", ticketSystem,
-		)
-
-		if dryRun {
-			slog.Warn("Skipping activation due to '--dry-run'")
-			os.Exit(0)
-		}
-		requestResponse := pim.RequestGovernanceRoleAssignment(subjectId, pim.ROLE_TYPE_ENTRA_ROLES, entraRoleAssignment, duration, reason, ticketSystem, ticketNumber, pimGovernanceRoleToken)
-		slog.Info(
-			"Request completed",
-			"role", entraRoleAssignment.RoleDefinition.DisplayName,
-			"scope", entraRoleAssignment.RoleDefinition.Resource.DisplayName,
-			"status", requestResponse.AssignmentState,
-		)
+		activateGovernanceRole(pim.ROLE_TYPE_ENTRA_ROLES)
 	},
 }
 
@@ -144,6 +147,7 @@ func init() {
 	activateCmd.PersistentFlags().StringVar(&ticketSystem, "ticket-system", "", "Ticket system for the activation")
 	activateCmd.PersistentFlags().StringVarP(&ticketNumber, "ticket-number", "T", "", "Ticket number for the activation")
 	activateCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Display the resource that would be activated, without requesting the activation")
+	activateCmd.PersistentFlags().BoolVarP(&validateOnly, "validate-only", "v", false, "Send the request to the validation endpoint of Azure PIM, without requesting the activation")
 
 	activateGroupCmd.PersistentFlags().StringVarP(&pimGovernanceRoleToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
 	activateGroupCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
