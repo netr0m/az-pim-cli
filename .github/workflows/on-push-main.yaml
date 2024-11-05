@@ -4,6 +4,10 @@ on:
     branches: [main]
 
 jobs:
+  test:
+    name: Run tests
+    uses: ./.github/workflows/test.yaml
+
   snyk:
     name: Scan dependencies
     uses: ./.github/workflows/snyk.yaml

@@ -8,6 +8,10 @@ jobs:
     name: Check code quality
     uses: ./.github/workflows/lint.yaml
 
+  test:
+    name: Run tests
+    uses: ./.github/workflows/test.yaml
+
   conventional-commits:
     name: Check for conventional commits compliance
     uses: ./.github/workflows/conventional-commits.yaml
