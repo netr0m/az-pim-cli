@@ -21,6 +21,7 @@ linters:
     - revive
     - staticcheck
     - stylecheck
+    - testifylint
     - unconvert
     - unparam
     - unused
