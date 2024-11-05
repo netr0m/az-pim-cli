@@ -4,8 +4,9 @@ Copyright © 2023 netr0m <netr0m@pm.me>
 package cmd
 
 import (
-	"log"
 	"os"
+
+	"log/slog"
 
 	"github.com/netr0m/az-pim-cli/pkg/pim"
 	"github.com/netr0m/az-pim-cli/pkg/utils"
@@ -39,21 +40,26 @@ var activateResourceCmd = &cobra.Command{
 		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token)
 		resourceAssignment := utils.GetResourceAssignment(name, prefix, roleName, eligibleResourceAssignments)
 
-		log.Printf(
-			"Activating role '%s' for resource '%s' with reason '%s' (ticket: %s [%s])",
-			resourceAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName,
-			resourceAssignment.Properties.ExpandedProperties.Scope.DisplayName,
-			reason,
-			ticketNumber,
-			ticketSystem,
+		slog.Info(
+			"Requesting activation",
+			"role", resourceAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName,
+			"scope", resourceAssignment.Properties.ExpandedProperties.Scope.DisplayName,
+			"reason", reason,
+			"ticketNumber", ticketNumber,
+			"ticketSystem", ticketSystem,
 		)
 
 		if dryRun {
-			log.Printf("Skipping activation due to 'dry-run'.")
+			slog.Warn("Skipping activation due to '--dry-run'")
 			os.Exit(0)
 		}
 		requestResponse := pim.RequestResourceAssignment(subjectId, resourceAssignment, duration, reason, ticketSystem, ticketNumber, token)
-		log.Printf("The role '%s' in '%s' is now %s", resourceAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName, resourceAssignment.Properties.ExpandedProperties.Scope.DisplayName, requestResponse.Properties.Status)
+		slog.Info(
+			"Request completed",
+			"role", resourceAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName,
+			"scope", resourceAssignment.Properties.ExpandedProperties.Scope.DisplayName,
+			"status", requestResponse.Properties.Status,
+		)
 	},
 }
 
@@ -67,21 +73,26 @@ var activateGroupCmd = &cobra.Command{
 		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, pimGovernanceRoleToken)
 		groupAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleGroupAssignments)
 
-		log.Printf(
-			"Activating role '%s' for group '%s' with reason '%s' (ticket: %s [%s])",
-			groupAssignment.RoleDefinition.DisplayName,
-			groupAssignment.RoleDefinition.Resource.DisplayName,
-			reason,
-			ticketNumber,
-			ticketSystem,
+		slog.Info(
+			"Requesting activation",
+			"role", groupAssignment.RoleDefinition.DisplayName,
+			"scope", groupAssignment.RoleDefinition.Resource.DisplayName,
+			"reason", reason,
+			"ticketNumber", ticketNumber,
+			"ticketSystem", ticketSystem,
 		)
 
 		if dryRun {
-			log.Printf("Skipping activation due to 'dry-run'.")
+			slog.Warn("Skipping activation due to '--dry-run'")
 			os.Exit(0)
 		}
 		requestResponse := pim.RequestGovernanceRoleAssignment(subjectId, pim.ROLE_TYPE_AAD_GROUPS, groupAssignment, duration, reason, ticketSystem, ticketNumber, pimGovernanceRoleToken)
-		log.Printf("The role '%s' for group '%s' is now %s", groupAssignment.RoleDefinition.DisplayName, groupAssignment.RoleDefinition.Resource.DisplayName, requestResponse.AssignmentState)
+		slog.Info(
+			"Request completed",
+			"role", groupAssignment.RoleDefinition.DisplayName,
+			"scope", groupAssignment.RoleDefinition.Resource.DisplayName,
+			"status", requestResponse.AssignmentState,
+		)
 	},
 }
 
@@ -95,21 +106,26 @@ var activateEntraRoleCmd = &cobra.Command{
 		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_ENTRA_ROLES, subjectId, pimGovernanceRoleToken)
 		entraRoleAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleEntraRoleAssignments)
 
-		log.Printf(
-			"Activating role '%s' for Entra role '%s' with reason '%s' (ticket: %s [%s])",
-			entraRoleAssignment.RoleDefinition.DisplayName,
-			entraRoleAssignment.RoleDefinition.Resource.DisplayName,
-			reason,
-			ticketNumber,
-			ticketSystem,
+		slog.Info(
+			"Requesting activation",
+			"role", entraRoleAssignment.RoleDefinition.DisplayName,
+			"scope", entraRoleAssignment.RoleDefinition.Resource.DisplayName,
+			"reason", reason,
+			"ticketNumber", ticketNumber,
+			"ticketSystem", ticketSystem,
 		)
 
 		if dryRun {
-			log.Printf("Skipping activation due to 'dry-run'.")
+			slog.Warn("Skipping activation due to '--dry-run'")
 			os.Exit(0)
 		}
 		requestResponse := pim.RequestGovernanceRoleAssignment(subjectId, pim.ROLE_TYPE_ENTRA_ROLES, entraRoleAssignment, duration, reason, ticketSystem, ticketNumber, pimGovernanceRoleToken)
-		log.Printf("The role '%s' for Entra role '%s' is now %s", entraRoleAssignment.RoleDefinition.DisplayName, entraRoleAssignment.RoleDefinition.Resource.DisplayName, requestResponse.AssignmentState)
+		slog.Info(
+			"Request completed",
+			"role", entraRoleAssignment.RoleDefinition.DisplayName,
+			"scope", entraRoleAssignment.RoleDefinition.Resource.DisplayName,
+			"status", requestResponse.AssignmentState,
+		)
 	},
 }
 
