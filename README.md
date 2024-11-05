@@ -50,6 +50,7 @@ Available Commands:
 
 Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
+      --debug           Enable debug logging
   -h, --help            help for az-pim-cli
 
 Use "az-pim-cli [command] --help" for more information about a command.
@@ -76,11 +77,13 @@ Flags:
 
 Global Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
+      --debug           Enable debug logging
 
 ```
 
 #### Groups
 > List [groups](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup)
+>
 > :warning: Requires an access token with the appropriate scope. See [Token for Entra ID Groups](#token-for-entra-id-groups) for more details.
 
 ```bash
@@ -99,11 +102,13 @@ Flags:
 
 Global Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
+      --debug           Enable debug logging
 
 ```
 
 #### Entra roles
 > List [entra roles](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadmigratedroles)
+>
 > :warning: Requires an access token with the appropriate scope. See [Token for Entra ID Groups and Roles](#token-for-entra-id-groups-and-roles) for more details.
 
 ```bash
@@ -122,6 +127,7 @@ Flags:
 
 Global Flags:
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
+      --debug           Enable debug logging
 
 ```
 
@@ -145,6 +151,7 @@ Flags:
 
 Global Flags:
   -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
+      --debug                  Enable debug logging
       --dry-run                Display the resource that would be activated, without requesting the activation
   -d, --duration int           Duration in minutes that the role should be activated for (default 480)
   -n, --name string            The name of the resource to activate
@@ -158,6 +165,7 @@ Global Flags:
 
 #### Groups
 > Activate [groups](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup)
+>
 > :warning: Requires an access token with the appropriate scope. See [Token for Entra ID Groups](#token-for-entra-id-groups) for more details.
 
 ```bash
@@ -176,6 +184,7 @@ Flags:
 
 Global Flags:
   -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
+      --debug                  Enable debug logging
       --dry-run                Display the resource that would be activated, without requesting the activation
   -d, --duration int           Duration in minutes that the role should be activated for (default 480)
   -n, --name string            The name of the resource to activate
@@ -189,6 +198,7 @@ Global Flags:
 
 #### Entra roles
 > Activate [entra roles](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadmigratedroles)
+>
 > :warning: Requires an access token with the appropriate scope. See [Token for Entra ID Groups and Roles](#token-for-entra-id-groups-and-roles) for more details.
 
 ```bash
@@ -208,6 +218,7 @@ Flags:
 
 Global Flags:
   -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
+      --debug                  Enable debug logging
       --dry-run                Display the resource that would be activated, without requesting the activation
   -d, --duration int           Duration in minutes that the role should be activated for (default 480)
   -n, --name string            The name of the resource to activate
@@ -313,6 +324,16 @@ To acquire the token, do the following:
   PIM_TOKEN=eyJ0[...]
   ```
 6. You may now, and for the duration of the token's lifetime, list and activate 'Entra groups' and 'Entra roles' using this tool
+
+### Troubleshooting
+
+To ease the process of troubleshooting, you can add the flag `--debug` to enable debug logging.
+
+> :warning: Debug logs contain sensitive information. Take care to sensor any sensitive data before sharing the output.
+
+```bash
+$ az-pim-cli activate role --name my-entra-id-role --duration 5 --debug
+```
 
 ## Contributing
 
