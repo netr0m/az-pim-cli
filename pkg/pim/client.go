@@ -25,6 +25,10 @@ type Client interface {
 	GetAccessToken(scope string) string
 	GetEligibleResourceAssignments(token string) *ResourceAssignmentResponse
 	GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string) *GovernanceRoleAssignmentResponse
+	ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) bool
+	ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) bool
+	RequestResourceAssignment(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) *ResourceAssignmentRequestResponse
+	RequestGovernanceRoleAssignment(roleType string, governanceRoleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) *GovernanceRoleAssignmentRequestResponse
 }
 
 // Azure Client implementation
@@ -223,15 +227,12 @@ func GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, tok
 	return c.GetEligibleGovernanceRoleAssignments(roleType, subjectId, token)
 }
 
-func ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest ResourceAssignmentRequestRequest, token string) bool {
+func (c AzureClient) ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) bool {
 	var params = map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
 	}
 
 	resourceAssignmentValidationRequest := resourceAssignmentRequest
-	resourceAssignmentValidationRequest.Properties.Justification = "validation only call"
-	resourceAssignmentValidationRequest.Properties.TicketInfo.TicketNumber = "Evaluate Only"
-	resourceAssignmentValidationRequest.Properties.TicketInfo.TicketSystem = "Evaluate Only"
 	resourceAssignmentValidationRequest.Properties.IsValidationOnly = true
 
 	validationResponse := &ResourceAssignmentRequestResponse{}
@@ -249,47 +250,19 @@ func ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest R
 		Payload: resourceAssignmentValidationRequest,
 	}, validationResponse)
 
-	if IsResourceAssignmentRequestFailed(validationResponse) {
-		_error := common.Error{
-			Operation: "ValidateResourceAssignmentRequest",
-			Message:   "The role assignment validation failed",
-			Status:    validationResponse.Properties.Status,
-			Request:   resourceAssignmentRequest,
-			Response:  validationResponse,
-		}
-		slog.Error(_error.Error())
-		slog.Debug(_error.Debug())
-		os.Exit(1)
-		return false
-	}
-	if IsResourceAssignmentRequestOK(validationResponse) {
-		return true
-	}
-	if IsResourceAssignmentRequestPending(validationResponse) {
-		slog.Warn("The role assignment request is pending", "status", validationResponse.Properties.Status)
-		return true
-	}
-
-	return false
+	return validationResponse.CheckResourceAssignmentResult(resourceAssignmentValidationRequest)
 }
 
-func ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest GovernanceRoleAssignmentRequest, token string) bool {
-	if !IsGovernanceRoleType(roleType) {
-		_error := common.Error{
-			Operation: "ValidateGovernanceRoleAssignmentRequest",
-			Message:   "Invalid role type specified.",
-		}
-		slog.Error(_error.Error())
-		os.Exit(1)
-	}
+func ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string, c Client) bool {
+	return c.ValidateResourceAssignmentRequest(scope, resourceAssignmentRequest, token)
+}
+
+func (c AzureClient) ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) bool {
 	var params = map[string]string{
 		"evaluateOnly": "true",
 	}
 
 	governanceRoleAssignmentValidationRequest := roleAssignmentRequest
-	governanceRoleAssignmentValidationRequest.Reason = "Evaluate Only"
-	governanceRoleAssignmentValidationRequest.TicketNumber = "Evaluate Only"
-	governanceRoleAssignmentValidationRequest.TicketSystem = "Evaluate Only"
 
 	validationResponse := &GovernanceRoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
@@ -300,57 +273,17 @@ func ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequ
 		Payload: governanceRoleAssignmentValidationRequest,
 	}, validationResponse)
 
-	if IsGovernanceRoleAssignmentRequestFailed(validationResponse) {
-		_error := common.Error{
-			Operation: "ValidateGovernanceRoleAssignmentRequest",
-			Message:   "The role assignment validation failed",
-			Status:    validationResponse.Status.Status,
-			Request:   roleAssignmentRequest,
-			Response:  validationResponse,
-		}
-		slog.Error(_error.Error())
-		slog.Debug(_error.Debug())
-		os.Exit(1)
-		return false
-	}
-	if IsGovernanceRoleAssignmentRequestOK(validationResponse) {
-		return true
-	}
-	if IsGovernanceRoleAssignmentRequestPending(validationResponse) {
-		slog.Warn("The role assignment request is pending", "status", validationResponse.Status.Status, "subStatus", validationResponse.Status.SubStatus)
-		return true
-	}
-
-	return false
+	return validationResponse.CheckGovernanceRoleAssignmentResult(governanceRoleAssignmentValidationRequest)
 }
 
-func RequestResourceAssignment(subjectId string, resourceAssignment *ResourceAssignment, duration int, reason string, ticketSystem string, ticketNumber string, token string) *ResourceAssignmentRequestResponse {
+func ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest *GovernanceRoleAssignmentRequest, token string, c Client) bool {
+	return c.ValidateGovernanceRoleAssignmentRequest(roleType, roleAssignmentRequest, token)
+}
+
+func (c AzureClient) RequestResourceAssignment(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) *ResourceAssignmentRequestResponse {
 	var params = map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
 	}
-
-	resourceAssignmentRequest := &ResourceAssignmentRequestRequest{
-		Properties: ResourceAssignmentRequestProperties{
-			PrincipalId:                     subjectId,
-			RoleDefinitionId:                resourceAssignment.Properties.ExpandedProperties.RoleDefinition.Id,
-			RequestType:                     "SelfActivate",
-			LinkedRoleEligibilityScheduleId: resourceAssignment.Properties.RoleEligibilityScheduleId,
-			Justification:                   reason,
-			ScheduleInfo: &ScheduleInfo{
-				StartDateTime: nil,
-				Expiration: &ScheduleInfoExpiration{
-					Type:     "AfterDuration",
-					Duration: fmt.Sprintf("PT%dM", duration),
-				},
-			},
-			TicketInfo:       &TicketInfo{TicketNumber: ticketNumber, TicketSystem: ticketSystem},
-			IsValidationOnly: false,
-			IsActivativation: true,
-		},
-	}
-	scope := resourceAssignment.Properties.ExpandedProperties.Scope.Id[1:]
-
-	ValidateResourceAssignmentRequest(scope, *resourceAssignmentRequest, token)
 
 	responseModel := &ResourceAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
@@ -367,39 +300,16 @@ func RequestResourceAssignment(subjectId string, resourceAssignment *ResourceAss
 		Payload: resourceAssignmentRequest,
 	}, responseModel)
 
+	responseModel.CheckResourceAssignmentResult(resourceAssignmentRequest)
+
 	return responseModel
 }
 
-func RequestGovernanceRoleAssignment(subjectId string, roleType string, governanceRoleAssignment *GovernanceRoleAssignment, duration int, reason string, ticketSystem string, ticketNumber string, token string) *GovernanceRoleAssignmentRequestResponse {
-	if !IsGovernanceRoleType(roleType) {
-		_error := common.Error{
-			Operation: "RequestGovernanceRoleAssignment",
-			Message:   "Invalid role type specified.",
-		}
-		slog.Error(_error.Error())
-		os.Exit(1)
-	}
-	governanceRoleAssignmentRequest := &GovernanceRoleAssignmentRequest{
-		RoleDefinitionId: governanceRoleAssignment.RoleDefinitionId,
-		ResourceId:       governanceRoleAssignment.ResourceId,
-		SubjectId:        subjectId,
-		AssignmentState:  "Active",
-		Type:             "UserAdd",
-		Reason:           reason,
-		TicketNumber:     ticketNumber,
-		TicketSystem:     ticketSystem,
-		Schedule: &GovernanceRoleAssignmentSchedule{
-			Type:          "Once",
-			StartDateTime: nil,
-			EndDateTime:   nil,
-			Duration:      fmt.Sprintf("PT%dM", duration),
-		},
-		LinkedEligibleRoleAssignmentId: governanceRoleAssignment.Id,
-		ScopedResourceId:               "",
-	}
+func RequestResourceAssignment(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string, c Client) *ResourceAssignmentRequestResponse {
+	return c.RequestResourceAssignment(scope, resourceAssignmentRequest, token)
+}
 
-	ValidateGovernanceRoleAssignmentRequest(roleType, *governanceRoleAssignmentRequest, token)
-
+func (c AzureClient) RequestGovernanceRoleAssignment(roleType string, governanceRoleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) *GovernanceRoleAssignmentRequestResponse {
 	responseModel := &GovernanceRoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
 		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_PIM_GOV_ROLE_BASE_URL, AZ_PIM_GOV_ROLE_BASE_PATH, roleType),
@@ -408,5 +318,11 @@ func RequestGovernanceRoleAssignment(subjectId string, roleType string, governan
 		Payload: governanceRoleAssignmentRequest,
 	}, responseModel)
 
+	responseModel.CheckGovernanceRoleAssignmentResult(governanceRoleAssignmentRequest)
+
 	return responseModel
+}
+
+func RequestGovernanceRoleAssignment(roleType string, governanceRoleAssignmentRequest *GovernanceRoleAssignmentRequest, token string, c Client) *GovernanceRoleAssignmentRequestResponse {
+	return c.RequestGovernanceRoleAssignment(roleType, governanceRoleAssignmentRequest, token)
 }
