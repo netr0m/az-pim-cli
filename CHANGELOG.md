@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/netr0m/az-pim-cli/compare/v1.3.0...v1.4.0) (2024-11-05)
+
+
+### Features
+
+* improved error messages and logging ([#68](https://github.com/netr0m/az-pim-cli/issues/68)) ([bbeea03](https://github.com/netr0m/az-pim-cli/commit/bbeea03b138d28653cc667954cd56cc25a9d9fa5))
+
+
+### Code Refactoring
+
+* create interface for azure client ([#72](https://github.com/netr0m/az-pim-cli/issues/72)) ([7391369](https://github.com/netr0m/az-pim-cli/commit/7391369453d3d24dd17e024e48100260d68da4da))
+
 ## [1.3.0](https://github.com/netr0m/az-pim-cli/compare/v1.2.0...v1.3.0) (2024-10-21)
 
 
