@@ -21,9 +21,9 @@ var listResourceCmd = &cobra.Command{
 	Aliases: []string{"r", "res", "resource", "resources", "sub", "subs", "subscriptions"},
 	Short:   "Query Azure PIM for eligible resource assignments (azure resources)",
 	Run: func(cmd *cobra.Command, args []string) {
-		token := pim.GetPIMAccessTokenAzureCLI(pim.AZ_PIM_SCOPE)
+		token := pim.GetAccessToken(pim.AZ_PIM_SCOPE, pim.AzureClient{})
 
-		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token)
+		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token, pim.AzureClient{})
 		utils.PrintEligibleResources(eligibleResourceAssignments)
 	},
 }
@@ -34,7 +34,7 @@ var listGroupCmd = &cobra.Command{
 	Short:   "Query Azure PIM for eligible group assignments",
 	Run: func(cmd *cobra.Command, args []string) {
 		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
-		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, pimGovernanceRoleToken)
+		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, pimGovernanceRoleToken, pim.AzureClient{})
 		utils.PrintEligibleGovernanceRoles(eligibleGroupAssignments)
 	},
 }
@@ -45,7 +45,7 @@ var listEntraRoleCmd = &cobra.Command{
 	Short:   "Query Azure PIM for eligible Entra role assignments",
 	Run: func(cmd *cobra.Command, args []string) {
 		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
-		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_ENTRA_ROLES, subjectId, pimGovernanceRoleToken)
+		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_ENTRA_ROLES, subjectId, pimGovernanceRoleToken, pim.AzureClient{})
 		utils.PrintEligibleGovernanceRoles(eligibleEntraRoleAssignments)
 	},
 }

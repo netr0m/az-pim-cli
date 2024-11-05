@@ -20,11 +20,22 @@ import (
 	"github.com/netr0m/az-pim-cli/pkg/common"
 )
 
-func GetPIMAccessTokenAzureCLI(scope string) string {
+// Azure Client interface
+type Client interface {
+	GetAccessToken(scope string) string
+	GetEligibleResourceAssignments(token string) *ResourceAssignmentResponse
+	GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string) *GovernanceRoleAssignmentResponse
+}
+
+// Azure Client implementation
+type AzureClient struct{}
+
+// Implementation of the GetAccessToken call
+func (c AzureClient) GetAccessToken(scope string) string {
 	cred, err := azidentity.NewAzureCLICredential(nil)
 	if err != nil {
 		_error := common.Error{
-			Operation: "GetPIMAccessTokenAzureCLI",
+			Operation: "GetAccessToken",
 			Message:   err.Error(),
 			Err:       err,
 		}
@@ -39,7 +50,7 @@ func GetPIMAccessTokenAzureCLI(scope string) string {
 	token, err := cred.GetToken(context.Background(), tokenOpts)
 	if err != nil {
 		_error := common.Error{
-			Operation: "GetPIMAccessTokenAzureCLI",
+			Operation: "GetAccessToken",
 			Message:   err.Error(),
 			Status:    "401",
 			Err:       err,
@@ -49,6 +60,10 @@ func GetPIMAccessTokenAzureCLI(scope string) string {
 	}
 
 	return token.Token
+}
+
+func GetAccessToken(scope string, c Client) string {
+	return c.GetAccessToken(scope)
 }
 
 func GetUserInfo(token string) AzureUserInfo {
@@ -160,7 +175,7 @@ func Request(request *PIMRequest, responseModel any) any {
 	return responseModel
 }
 
-func GetEligibleResourceAssignments(token string) *ResourceAssignmentResponse {
+func (c AzureClient) GetEligibleResourceAssignments(token string) *ResourceAssignmentResponse {
 	var params = map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
 		"$filter":     "asTarget()",
@@ -176,7 +191,11 @@ func GetEligibleResourceAssignments(token string) *ResourceAssignmentResponse {
 	return responseModel
 }
 
-func GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string) *GovernanceRoleAssignmentResponse {
+func GetEligibleResourceAssignments(token string, c Client) *ResourceAssignmentResponse {
+	return c.GetEligibleResourceAssignments(token)
+}
+
+func (c AzureClient) GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string) *GovernanceRoleAssignmentResponse {
 	if !IsGovernanceRoleType(roleType) {
 		_error := common.Error{
 			Operation: "GetEligibleGovernanceRoleAssignments",
@@ -198,6 +217,10 @@ func GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, tok
 	}, responseModel)
 
 	return responseModel
+}
+
+func GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string, c Client) *GovernanceRoleAssignmentResponse {
+	return c.GetEligibleGovernanceRoleAssignments(roleType, subjectId, token)
 }
 
 func ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest ResourceAssignmentRequestRequest, token string) bool {

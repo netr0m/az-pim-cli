@@ -34,10 +34,10 @@ var activateResourceCmd = &cobra.Command{
 	Aliases: []string{"r", "res", "resource", "resources", "sub", "subs", "subscriptions"},
 	Short:   "Sends a request to Azure PIM to activate the given resource (azure resources)",
 	Run: func(cmd *cobra.Command, args []string) {
-		token := pim.GetPIMAccessTokenAzureCLI(pim.AZ_PIM_SCOPE)
+		token := pim.GetAccessToken(pim.AZ_PIM_SCOPE, pim.AzureClient{})
 		subjectId := pim.GetUserInfo(token).ObjectId
 
-		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token)
+		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token, pim.AzureClient{})
 		resourceAssignment := utils.GetResourceAssignment(name, prefix, roleName, eligibleResourceAssignments)
 
 		slog.Info(
@@ -70,7 +70,7 @@ var activateGroupCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
 
-		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, pimGovernanceRoleToken)
+		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, pimGovernanceRoleToken, pim.AzureClient{})
 		groupAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleGroupAssignments)
 
 		slog.Info(
@@ -103,7 +103,7 @@ var activateEntraRoleCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
 
-		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_ENTRA_ROLES, subjectId, pimGovernanceRoleToken)
+		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_ENTRA_ROLES, subjectId, pimGovernanceRoleToken, pim.AzureClient{})
 		entraRoleAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleEntraRoleAssignments)
 
 		slog.Info(
