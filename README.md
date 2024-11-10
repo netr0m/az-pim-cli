@@ -1,7 +1,7 @@
 # Azure PIM CLI
 *Azure Privileged Identity Management Command Line Interface*
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/netr0m/az-pim-cli.svg)](https://pkg.go.dev/github.com/netr0m/az-pim-cli)
+[![Go Reference](https://pkg.go.dev/badge/github.com/netr0m/az-pim-cli.svg)](https://pkg.go.dev/github.com/netr0m/az-pim-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/netr0m/az-pim-cli)](https://goreportcard.com/report/github.com/netr0m/az-pim-cli)
 
 `az-pim-cli` eases the process of listing and activating Azure PIM roles by allowing activation via the command line. Authentication is handled with the `azure.identity` library by utilizing the `AzureCLICredential` method.
 It currently supports ['azure resources'](#azure-resources), ['groups'](#groups), and ['entra roles'](#entra-roles)
@@ -333,6 +333,14 @@ To ease the process of troubleshooting, you can add the flag `--debug` to enable
 
 ```bash
 $ az-pim-cli activate role --name my-entra-id-role --duration 5 --debug
+```
+
+## Testing
+
+To run the unit tests, run the following command from the project root:
+
+```bash
+$ go test -v ./...
 ```
 
 ## Contributing
