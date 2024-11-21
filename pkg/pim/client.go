@@ -89,11 +89,19 @@ func GetUserInfo(token string) AzureUserInfo {
 	return *claims.AzureUserInfo
 }
 
+func handleRequestErr(_error *common.Error, err error, req *http.Request) {
+	_error.Message = err.Error()
+	_error.Err = err
+	_error.Request = req
+	slog.Error(_error.Error())
+	slog.Debug(_error.Debug())
+	os.Exit(1)
+}
+
 func Request(request *PIMRequest, responseModel any) any {
 	// Prepare request body
 	var req *http.Request
 	var err error
-	var payload io.Reader
 	var _error = common.Error{
 		Operation: "Request",
 	}
@@ -101,18 +109,17 @@ func Request(request *PIMRequest, responseModel any) any {
 	if request.Payload != nil {
 		payload := new(bytes.Buffer)
 		json.NewEncoder(payload).Encode(request.Payload) //nolint:errcheck
+		req, err = http.NewRequest(request.Method, request.Url, payload)
+		if err != nil {
+			handleRequestErr(&_error, err, req)
+		}
 	} else {
-		payload = nil
+		req, err = http.NewRequest(request.Method, request.Url, nil)
+		if err != nil {
+			handleRequestErr(&_error, err, req)
+		}
 	}
-	req, err = http.NewRequest(request.Method, request.Url, payload)
-	if err != nil {
-		_error.Message = err.Error()
-		_error.Err = err
-		_error.Request = req
-		slog.Error(_error.Error())
-		slog.Debug(_error.Debug())
-		os.Exit(1)
-	}
+
 	// Add headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
