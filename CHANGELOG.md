@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/netr0m/az-pim-cli/compare/v1.4.0...v1.5.0) (2024-11-21)
+
+
+### Bug Fixes
+
+* **pim-client:** resolve invalid logic for building a request ([#76](https://github.com/netr0m/az-pim-cli/issues/76)) ([ece6a96](https://github.com/netr0m/az-pim-cli/commit/ece6a96be07f771ce9308f47750ff41c2c4676d8))
+* **pim-client:** resolve invalid logic for building a request dynamically ([ece6a96](https://github.com/netr0m/az-pim-cli/commit/ece6a96be07f771ce9308f47750ff41c2c4676d8))
+
 ## [1.4.0](https://github.com/netr0m/az-pim-cli/compare/v1.3.0...v1.4.0) (2024-11-05)
 
 
