@@ -17,6 +17,8 @@ var name string
 var prefix string
 var roleName string
 var duration int
+var startDate string
+var startTime string
 var reason string
 var ticketSystem string
 var ticketNumber string
@@ -40,7 +42,7 @@ var activateResourceCmd = &cobra.Command{
 
 		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token, pim.AzureClient{})
 		resourceAssignment := utils.GetResourceAssignment(name, prefix, roleName, eligibleResourceAssignments)
-		scope, assignmentRequest := pim.CreateResourceAssignmentRequest(subjectId, resourceAssignment, duration, reason, ticketSystem, ticketNumber)
+		scope, assignmentRequest := pim.CreateResourceAssignmentRequest(subjectId, resourceAssignment, duration, startDate, startTime, reason, ticketSystem, ticketNumber)
 
 		slog.Info(
 			"Requesting activation",
@@ -49,6 +51,8 @@ var activateResourceCmd = &cobra.Command{
 			"reason", reason,
 			"ticketNumber", ticketNumber,
 			"ticketSystem", ticketSystem,
+			"duration", duration,
+			"startDateTime", assignmentRequest.Properties.ScheduleInfo.StartDateTime,
 		)
 
 		if dryRun {
@@ -81,7 +85,7 @@ func activateGovernanceRole(roleType string) {
 	subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
 	eligibleAssignments := pim.GetEligibleGovernanceRoleAssignments(roleType, subjectId, pimGovernanceRoleToken, pim.AzureClient{})
 	roleAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleAssignments)
-	roleType, assignmentRequest := pim.CreateGovernanceRoleAssignmentRequest(subjectId, roleType, roleAssignment, duration, reason, ticketSystem, ticketNumber)
+	roleType, assignmentRequest := pim.CreateGovernanceRoleAssignmentRequest(subjectId, roleType, roleAssignment, duration, startDate, startTime, reason, ticketSystem, ticketNumber)
 
 	slog.Info(
 		"Requesting activation",
@@ -90,6 +94,8 @@ func activateGovernanceRole(roleType string) {
 		"reason", reason,
 		"ticketNumber", ticketNumber,
 		"ticketSystem", ticketSystem,
+		"duration", duration,
+		"startDateTime", assignmentRequest.Schedule.StartDateTime,
 	)
 
 	if dryRun {
@@ -143,6 +149,8 @@ func init() {
 	activateCmd.PersistentFlags().StringVarP(&prefix, "prefix", "p", "", "The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.")
 	activateCmd.PersistentFlags().StringVarP(&roleName, "role", "r", "", "Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')")
 	activateCmd.PersistentFlags().IntVarP(&duration, "duration", "d", pim.DEFAULT_DURATION_MINUTES, "Duration in minutes that the role should be activated for")
+	activateCmd.PersistentFlags().StringVar(&startDate, "start-date", "", "Start date for the activation (as DD/MM/YYYY)")
+	activateCmd.PersistentFlags().StringVarP(&startTime, "start-time", "s", "", "Start time for the activation (as HH:MM)")
 	activateCmd.PersistentFlags().StringVar(&reason, "reason", pim.DEFAULT_REASON, "Reason for the activation")
 	activateCmd.PersistentFlags().StringVar(&ticketSystem, "ticket-system", "", "Ticket system for the activation")
 	activateCmd.PersistentFlags().StringVarP(&ticketNumber, "ticket-number", "T", "", "Ticket number for the activation")

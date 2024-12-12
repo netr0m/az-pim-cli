@@ -122,7 +122,7 @@ func TestValidateResourceAssignmentRequest(t *testing.T) {
 	m := newMockClient()
 
 	resourceAssignment := &EligibleResourceAssignmentsDummyData.Value[0]
-	scope, resourceAssignmentRequest := CreateResourceAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, resourceAssignment, 30, "test", "Test", "1337")
+	scope, resourceAssignmentRequest := CreateResourceAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, resourceAssignment, 30, "", "", "test", "Test", "1337")
 
 	m.On("ValidateResourceAssignmentRequest", scope, resourceAssignmentRequest, TEST_DUMMY_JWT).Return(true)
 
@@ -142,7 +142,7 @@ func TestValidateGovernanceRoleAssignmentRequest(t *testing.T) {
 	m := newMockClient()
 
 	governanceRoleAssignment := &EligibleGovernanceRoleAssignmentsDummyData.Value[0]
-	roleType, governanceRoleAssignmentRequest := CreateGovernanceRoleAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, ROLE_TYPE_AAD_GROUPS, governanceRoleAssignment, 30, "test", "Test", "1337")
+	roleType, governanceRoleAssignmentRequest := CreateGovernanceRoleAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, ROLE_TYPE_AAD_GROUPS, governanceRoleAssignment, 30, "", "", "test", "Test", "1337")
 
 	m.On("ValidateGovernanceRoleAssignmentRequest", roleType, governanceRoleAssignmentRequest, TEST_DUMMY_JWT).Return(true)
 
@@ -162,7 +162,7 @@ func TestRequestResourceAssignment(t *testing.T) {
 	m := newMockClient()
 
 	resourceAssignment := &EligibleResourceAssignmentsDummyData.Value[0]
-	scope, resourceAssignmentRequest := CreateResourceAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, resourceAssignment, DEFAULT_DURATION_MINUTES, DEFAULT_REASON, "Test", "1337")
+	scope, resourceAssignmentRequest := CreateResourceAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, resourceAssignment, DEFAULT_DURATION_MINUTES, "", "", DEFAULT_REASON, "Test", "1337")
 	resourceAssignmentRequestResponse := &ResourceAssignmentRequestResponse{
 		Id:   resourceAssignment.Id,
 		Name: resourceAssignment.Name,
@@ -199,7 +199,7 @@ func TestRequestGovernanceRoleAssignmentAADGroup(t *testing.T) {
 	m := newMockClient()
 
 	governanceRoleAssignment := &EligibleGovernanceRoleAssignmentsDummyData.Value[0]
-	roleType, governanceRoleAssignmentRequest := CreateGovernanceRoleAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, ROLE_TYPE_AAD_GROUPS, governanceRoleAssignment, DEFAULT_DURATION_MINUTES, DEFAULT_REASON, "Test", "1337")
+	roleType, governanceRoleAssignmentRequest := CreateGovernanceRoleAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, ROLE_TYPE_AAD_GROUPS, governanceRoleAssignment, DEFAULT_DURATION_MINUTES, "", "", DEFAULT_REASON, "Test", "1337")
 	governanceRoleAssignmentRequestResponse := &GovernanceRoleAssignmentRequestResponse{
 		Id:               governanceRoleAssignment.Id,
 		ResourceId:       governanceRoleAssignmentRequest.ResourceId,
