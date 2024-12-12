@@ -158,8 +158,11 @@ Global Flags:
   -p, --prefix string          The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
       --reason string          Reason for the activation (default "config")
   -r, --role string            Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')
+      --start-date string      Start date for the activation (as DD/MM/YYYY)
+  -s, --start-time string      Start time for the activation (as HH:MM)
   -T, --ticket-number string   Ticket number for the activation
       --ticket-system string   Ticket system for the activation
+  -v, --validate-only          Send the request to the validation endpoint of Azure PIM, without requesting the activation
 
 ```
 
@@ -191,8 +194,11 @@ Global Flags:
   -p, --prefix string          The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
       --reason string          Reason for the activation (default "config")
   -r, --role string            Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')
+      --start-date string      Start date for the activation (as DD/MM/YYYY)
+  -s, --start-time string      Start time for the activation (as HH:MM)
   -T, --ticket-number string   Ticket number for the activation
       --ticket-system string   Ticket system for the activation
+  -v, --validate-only          Send the request to the validation endpoint of Azure PIM, without requesting the activation
 
 ```
 
@@ -203,7 +209,6 @@ Global Flags:
 
 ```bash
 $ az-pim-cli activate role --help
-go run main.go activate role --help
 Sends a request to Azure PIM to activate the given Entra role
 
 Usage:
@@ -225,8 +230,11 @@ Global Flags:
   -p, --prefix string          The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
       --reason string          Reason for the activation (default "config")
   -r, --role string            Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')
+      --start-date string      Start date for the activation (as DD/MM/YYYY)
+  -s, --start-time string      Start time for the activation (as HH:MM)
   -T, --ticket-number string   Ticket number for the activation
       --ticket-system string   Ticket system for the activation
+  -v, --validate-only          Send the request to the validation endpoint of Azure PIM, without requesting the activation
 
 ```
 
@@ -243,18 +251,33 @@ $ az-pim-cli list resources
 
 # Activate the first matching role for a resource with the prefix 'S100'
 $ az-pim-cli activate resource --prefix S100
-2024/05/31 15:05:25 Activating role 'Contributor' for resource 'S100-Example-Subscription' with reason 'config' (ticket:  [])
-2024/05/31 15:05:34 The role 'Contributor' in 'S100-Example-Subscription' is now Provisioned
+time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Contributor scope=S100-Example-Subscription reason="" ticketNumber="" ticketSystem="" duration=480 startDateTime=""
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Contributor scope=S100-Example-Subscription status=Provisioned
 
 # Activate a specific role ('Owner') for a resource with the prefix 's100'
 $ az-pim-cli activate resource --prefix s100 --role owner
-2024/05/31 15:06:25 Activating role 'Owner' for resource 'S100-Example-Subscription' with reason 'config' (ticket:  [])
-2024/05/31 15:06:34 The role 'Owner' in 'S100-Example-Subscription' is now Provisioned
+time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=S100-Example-Subscription reason="" ticketNumber="" ticketSystem="" duration=480 startDateTime=""
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=S100-Example-Subscription status=Provisioned
 
 # Activate a resource role and specify a ticket number for the activation
 $ az-pim-cli activate resource --name S100-Example-Subscription --role Owner --ticket-system Jira --ticket-number T-1337
-2024/05/31 15:06:25 Activating role 'Owner' for resource 'S100-Example-Subscription' with reason 'config' (ticket: T-1337 [Jira])
-2024/05/31 15:06:34 The role 'Owner' in 'S100-Example-Subscription' is now Provisioned
+time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=S100-Example-Subscription reason="" ticketNumber=T-1337 ticketSystem=Jira duration=480 startDateTime=""
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=S100-Example-Subscription status=Provisioned
+
+# Activate a resource role and specify the start time for the activation. Uses the local timezone.
+$ az-pim-cli activate resource --name S100-Example-Subscription --role Owner --start-time 14:30
+time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=S100-Example-Subscription reason="" ticketNumber=T-1337 ticketSystem=Jira duration=480 startDateTime=2024-11-20T14:30:00+01:00
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=S100-Example-Subscription status=Provisioned
+
+# Activate a resource role and specify the start time and start date for the activation. Uses the local timezone.
+$ az-pim-cli activate resource --name S100-Example-Subscription --role Owner --start-date 31/12/2024 --start-time 09:30
+time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=S100-Example-Subscription reason="" ticketNumber=T-1337 ticketSystem=Jira duration=480 startDateTime=2024-12-31T09:30:00+01:00
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=S100-Example-Subscription status=Provisioned
 ```
 
 #### Groups
@@ -266,8 +289,9 @@ $ az-pim-cli list groups
 
 # Activate the first matching role for the group 'my-entra-id-group'
 $ az-pim-cli activate group --name my-entra-id-group --duration 5
-2024/05/31 15:00:10 Activating role 'Owner' for group 'my-entra-id-group' with reason 'config' (ticket:  [])
-2024/05/31 15:00:23 The role 'Owner' for group 'my-entra-id-group' is now Active
+time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=my-entra-id-group reason="" ticketNumber="" ticketSystem="" duration=5 startDateTime=""
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned subStatus=""
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=my-entra-id-group status=Active
 ```
 
 #### Entra roles
@@ -279,8 +303,9 @@ $ az-pim-cli list roles
 
 # Activate the first matching role for the Entra role 'my-entra-id-role'
 $ az-pim-cli activate role --name my-entra-id-role --duration 5
-2024/05/31 15:00:10 Activating role 'Owner' for Entra role 'my-entra-id-role' with reason 'config' (ticket:  [])
-2024/05/31 15:00:23 The role 'Owner' for Entra role 'my-entra-id-role' is now Active
+time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=my-entra-id-role reason="" ticketNumber="" ticketSystem="" duration=5 startDateTime=""
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned subStatus=""
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=my-entra-id-role status=Active
 ```
 
 ### Configuration options
