@@ -161,7 +161,9 @@ func parseDateTime(dateStr string, timeStr string) (string, *common.Error) {
 		d = d.Add(time.Hour*time.Duration(t.Hour()) + time.Minute*time.Duration(t.Minute()))
 	}
 
-	formatted := d.Format(time.RFC3339)
+	// format is the same as 'time.RFC3339', except for the timezone part.
+	// must be customized due to inconsistencies in behavior when TZ environment variable is missing
+	formatted := d.Format("2006-01-02T15:04:05-07:00")
 	return formatted, nil
 }
 
