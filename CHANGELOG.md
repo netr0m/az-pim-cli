@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/netr0m/az-pim-cli/compare/v1.5.0...v1.6.0) (2025-02-21)
+
+
+### Features
+
+* add support for setting start-time ([#81](https://github.com/netr0m/az-pim-cli/issues/81)) ([ee8a4a9](https://github.com/netr0m/az-pim-cli/commit/ee8a4a914be91c7ef3e7d84da3cdcd66b8e31fe9))
+
 ## [1.5.0](https://github.com/netr0m/az-pim-cli/compare/v1.4.0...v1.5.0) (2024-11-21)
 
 
