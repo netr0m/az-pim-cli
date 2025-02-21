@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/netr0m/az-pim-cli/pkg/common"
 )
@@ -107,7 +108,7 @@ func (response *GovernanceRoleAssignmentRequestResponse) CheckGovernanceRoleAssi
 		return false
 	}
 	if IsGovernanceRoleAssignmentRequestOK(response) {
-		slog.Info("The role assignment request was successfully validated", "status", response.Status.Status, "subStatus", response.Status.SubStatus)
+		slog.Info("The role assignment request was successful", "status", response.Status.Status, "subStatus", response.Status.SubStatus)
 		return true
 	}
 	if IsGovernanceRoleAssignmentRequestPending(response) {
@@ -118,7 +119,77 @@ func (response *GovernanceRoleAssignmentRequestResponse) CheckGovernanceRoleAssi
 	return false
 }
 
-func CreateResourceAssignmentRequest(subjectId string, resourceAssignment *ResourceAssignment, duration int, reason string, ticketSystem string, ticketNumber string) (string, *ResourceAssignmentRequestRequest) {
+func parseDate(dateStr string) (time.Time, error) {
+	dateLayout := "02/01/2006" // DD/MM/YYYY
+	d, err := time.Parse(dateLayout, dateStr)
+	if err != nil {
+		return d, err
+	}
+	return time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, time.Local), nil
+}
+
+func parseTime(timeStr string) (time.Time, error) {
+	timeLayout := "15:04" // HH:MM
+	return time.Parse(timeLayout, timeStr)
+}
+
+func parseDateTime(dateStr string, timeStr string) (string, *common.Error) {
+	_error := &common.Error{
+		Operation: "parseDateTime",
+	}
+	var d time.Time
+	if dateStr == "" {
+		// Get the current date, remove time info
+		now := time.Now().Local()
+		d = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	} else {
+		_d, err := parseDate(dateStr)
+		if err != nil {
+			_error.Message = "Unable to parse the date"
+			_error.Err = err
+			return "", _error
+		}
+		d = _d
+	}
+	if timeStr != "" {
+		t, err := parseTime(timeStr)
+		if err != nil {
+			_error.Message = "Unable to parse the time"
+			_error.Err = err
+			return "", _error
+		}
+		d = d.Add(time.Hour*time.Duration(t.Hour()) + time.Minute*time.Duration(t.Minute()))
+	}
+
+	// format is the same as 'time.RFC3339', except for the timezone part.
+	// must be customized due to inconsistencies in behavior when TZ environment variable is missing
+	formatted := d.Format("2006-01-02T15:04:05-07:00")
+	return formatted, nil
+}
+
+func CreateResourceAssignmentScheduleInfo(duration int, startDate string, startTime string) *ScheduleInfo {
+	var scheduleStart interface{}
+	if (startDate != "") || (startTime != "") {
+		startDateTime, err := parseDateTime(startDate, startTime)
+		if err != nil {
+			slog.Error(err.Error())
+			slog.Debug(err.Debug())
+			os.Exit(1)
+		}
+		scheduleStart = startDateTime
+	}
+
+	return &ScheduleInfo{
+		StartDateTime: scheduleStart,
+		Expiration: &ScheduleInfoExpiration{
+			Type:     "AfterDuration",
+			Duration: fmt.Sprintf("PT%dM", duration),
+		},
+	}
+}
+
+func CreateResourceAssignmentRequest(subjectId string, resourceAssignment *ResourceAssignment, duration int, startDate string, startTime string, reason string, ticketSystem string, ticketNumber string) (string, *ResourceAssignmentRequestRequest) {
+	scheduleInfo := CreateResourceAssignmentScheduleInfo(duration, startDate, startTime)
 	resourceAssignmentRequest := &ResourceAssignmentRequestRequest{
 		Properties: ResourceAssignmentRequestProperties{
 			PrincipalId:                     subjectId,
@@ -126,16 +197,10 @@ func CreateResourceAssignmentRequest(subjectId string, resourceAssignment *Resou
 			RequestType:                     "SelfActivate",
 			LinkedRoleEligibilityScheduleId: resourceAssignment.Properties.RoleEligibilityScheduleId,
 			Justification:                   reason,
-			ScheduleInfo: &ScheduleInfo{
-				StartDateTime: nil,
-				Expiration: &ScheduleInfoExpiration{
-					Type:     "AfterDuration",
-					Duration: fmt.Sprintf("PT%dM", duration),
-				},
-			},
-			TicketInfo:       &TicketInfo{TicketNumber: ticketNumber, TicketSystem: ticketSystem},
-			IsValidationOnly: false,
-			IsActivativation: true,
+			ScheduleInfo:                    scheduleInfo,
+			TicketInfo:                      &TicketInfo{TicketNumber: ticketNumber, TicketSystem: ticketSystem},
+			IsValidationOnly:                false,
+			IsActivativation:                true,
 		},
 	}
 	scope := resourceAssignment.Properties.ExpandedProperties.Scope.Id[1:]
@@ -143,7 +208,27 @@ func CreateResourceAssignmentRequest(subjectId string, resourceAssignment *Resou
 	return scope, resourceAssignmentRequest
 }
 
-func CreateGovernanceRoleAssignmentRequest(subjectId string, roleType string, governanceRoleAssignment *GovernanceRoleAssignment, duration int, reason string, ticketSystem string, ticketNumber string) (string, *GovernanceRoleAssignmentRequest) {
+func CreateGovernanceRoleAssignmentScheduleInfo(duration int, startDate string, startTime string) *GovernanceRoleAssignmentSchedule {
+	var scheduleStart interface{}
+	if (startDate != "") || (startTime != "") {
+		startDateTime, err := parseDateTime(startDate, startTime)
+		if err != nil {
+			slog.Error(err.Error())
+			slog.Debug(err.Debug())
+			os.Exit(1)
+		}
+		scheduleStart = startDateTime
+	}
+
+	return &GovernanceRoleAssignmentSchedule{
+		Type:          "Once",
+		StartDateTime: scheduleStart,
+		EndDateTime:   nil,
+		Duration:      fmt.Sprintf("PT%dM", duration),
+	}
+}
+
+func CreateGovernanceRoleAssignmentRequest(subjectId string, roleType string, governanceRoleAssignment *GovernanceRoleAssignment, duration int, startDate string, startTime string, reason string, ticketSystem string, ticketNumber string) (string, *GovernanceRoleAssignmentRequest) {
 	if !IsGovernanceRoleType(roleType) {
 		_error := common.Error{
 			Operation: "CreateGovernanceRoleAssignmentRequest",
@@ -153,21 +238,17 @@ func CreateGovernanceRoleAssignmentRequest(subjectId string, roleType string, go
 		os.Exit(1)
 	}
 
+	scheduleInfo := CreateGovernanceRoleAssignmentScheduleInfo(duration, startDate, startTime)
 	governanceRoleAssignmentRequest := &GovernanceRoleAssignmentRequest{
-		RoleDefinitionId: governanceRoleAssignment.RoleDefinitionId,
-		ResourceId:       governanceRoleAssignment.ResourceId,
-		SubjectId:        subjectId,
-		AssignmentState:  "Active",
-		Type:             "UserAdd",
-		Reason:           reason,
-		TicketNumber:     ticketNumber,
-		TicketSystem:     ticketSystem,
-		Schedule: &GovernanceRoleAssignmentSchedule{
-			Type:          "Once",
-			StartDateTime: nil,
-			EndDateTime:   nil,
-			Duration:      fmt.Sprintf("PT%dM", duration),
-		},
+		RoleDefinitionId:               governanceRoleAssignment.RoleDefinitionId,
+		ResourceId:                     governanceRoleAssignment.ResourceId,
+		SubjectId:                      subjectId,
+		AssignmentState:                "Active",
+		Type:                           "UserAdd",
+		Reason:                         reason,
+		TicketNumber:                   ticketNumber,
+		TicketSystem:                   ticketSystem,
+		Schedule:                       scheduleInfo,
 		LinkedEligibleRoleAssignmentId: governanceRoleAssignment.Id,
 		ScopedResourceId:               "",
 	}
