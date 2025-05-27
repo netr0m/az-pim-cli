@@ -1,6 +1,9 @@
 module github.com/netr0m/az-pim-cli
 
-go 1.23
+go 1.23.0
+
+toolchain go1.24.2
+
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.12.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0
