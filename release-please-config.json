@@ -20,33 +20,32 @@
           "section": "Documentation"
         },
         {
+          "type": "perf",
+          "section": "Performance Improvements"
+        },
+        {
           "type": "refactor",
           "section": "Code Refactoring"
         },
         {
           "type": "chore",
-          "section": "Chores",
-          "hidden": true
+          "section": "Chores"
         },
         {
           "type": "test",
-          "section": "Tests",
-          "hidden": true
+          "section": "Tests"
         },
         {
           "type": "lint",
-          "section": "Linting",
-          "hidden": true
+          "section": "Linting"
         },
         {
           "type": "build",
-          "section": "Build",
-          "hidden": true
+          "section": "Build"
         },
         {
           "type": "ci",
-          "section": "Continuous Integration",
-          "hidden": true
+          "section": "Continuous Integration"
         }
       ],
       "draft": false,
