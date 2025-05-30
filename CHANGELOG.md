@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.1](https://github.com/netr0m/az-pim-cli/compare/v1.6.0...v1.6.1) (2025-05-30)
+
+
+### Chores
+
+* create release v1.6.1 ([#89](https://github.com/netr0m/az-pim-cli/issues/89)) ([4b0316c](https://github.com/netr0m/az-pim-cli/commit/4b0316cbbfb5091b9fb301bb901a39c1bfd58d91))
+* upgrade dependencies ([#88](https://github.com/netr0m/az-pim-cli/issues/88)) ([b70f388](https://github.com/netr0m/az-pim-cli/commit/b70f38815df5cfaaa4093a3c35440131376b0ecf))
+
 ## [1.6.0](https://github.com/netr0m/az-pim-cli/compare/v1.5.0...v1.6.0) (2025-02-21)
 
 
