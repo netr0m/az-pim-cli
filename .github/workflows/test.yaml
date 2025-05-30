@@ -5,6 +5,9 @@ concurrency:
   cancel-in-progress: true
   group: ${{ github.workflow }}-${{ github.ref }}-test
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test
