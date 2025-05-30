@@ -1,6 +1,9 @@
 name: Conventional Commits
 on: [workflow_call]
 
+permissions:
+  contents: read
+
 jobs:
   conventional-commits:
     name: Check for Conventional Commits compliance

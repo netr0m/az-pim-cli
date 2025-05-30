@@ -5,12 +5,15 @@ concurrency:
   cancel-in-progress: true
   group: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  contents: read
+
 jobs:
   pre-commit:
     strategy:
       fail-fast: false
       matrix:
-        hook: ['builtin', 'golangci-lint']
+        hook: ["builtin", "golangci-lint"]
         include:
           - hook: builtin
             skip: golangci-lint,golangci-lint-full
