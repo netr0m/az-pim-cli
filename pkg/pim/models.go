@@ -11,8 +11,8 @@ type AzureUserInfo struct {
 }
 
 type AzureUserInfoClaims struct {
-	*jwt.MapClaims
-	*AzureUserInfo
+	jwt.MapClaims
+	AzureUserInfo
 }
 
 type PIMRequest struct {
