@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.7.0](https://github.com/netr0m/az-pim-cli/compare/v1.6.1...v1.7.0) (2025-07-27)
+
+
+### Bug Fixes
+
+* prevent panic from JWT parsing ([01a09ca](https://github.com/netr0m/az-pim-cli/commit/01a09ca5aa46e437136f264f9bc412a6dc34a86b))
+* prevent panic from JWT parsing ([#96](https://github.com/netr0m/az-pim-cli/issues/96)) ([01a09ca](https://github.com/netr0m/az-pim-cli/commit/01a09ca5aa46e437136f264f9bc412a6dc34a86b))
+
+
+### Continuous Integration
+
+* set permissions for workflows ([#91](https://github.com/netr0m/az-pim-cli/issues/91)) ([e4bb4d7](https://github.com/netr0m/az-pim-cli/commit/e4bb4d7617a0561ae2fad3fb00c1e12d1548d5fc))
+
 ## [1.6.1](https://github.com/netr0m/az-pim-cli/compare/v1.6.0...v1.6.1) (2025-05-30)
 
 
