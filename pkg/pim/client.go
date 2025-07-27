@@ -86,7 +86,7 @@ func GetUserInfo(token string) AzureUserInfo {
 	// Parse claims
 	claims := decoded.Claims.(*AzureUserInfoClaims)
 
-	return *claims.AzureUserInfo
+	return claims.AzureUserInfo
 }
 
 func handleRequestErr(_error *common.Error, err error, req *http.Request) {
