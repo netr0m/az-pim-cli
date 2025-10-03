@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/netr0m/az-pim-cli/compare/v1.8.0...v1.9.0) (2025-10-03)
+
+
+### Features
+
+* **goreleaser:** include binaries in release ([#101](https://github.com/netr0m/az-pim-cli/issues/101)) ([808cdf1](https://github.com/netr0m/az-pim-cli/commit/808cdf12ddd1b95f2e96b83b325683190d05f68f))
+
 ## [1.8.0](https://github.com/netr0m/az-pim-cli/compare/v1.7.0...v1.8.0) (2025-10-03)
 
 
