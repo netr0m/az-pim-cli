@@ -24,7 +24,7 @@ builds:
 
 universal_binaries:
   - id: macos-universal
-    replace: true
+    replace: false
     ids: [default]
     name_template: '{{ .ProjectName }}-{{ .Version }}-macos-universal'
 
@@ -44,7 +44,7 @@ archives:
       - LICENSE
       - README.md
       - CHANGELOG.md
-    ids: [default]
+    ids: [default, macos-universal]
   - id: binaries
     formats: [binary]
     name_template: >-
@@ -52,7 +52,7 @@ archives:
       {{- if eq .Os "darwin" -}}macos{{- else -}}{{ .Os }}{{- end -}}-
       {{- if eq .Arch "amd64" -}}x86_64{{- else -}}{{ .Arch }}{{- end -}}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    ids: [default]
+    ids: [default, macos-universal]
 
 checksum:
   name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
