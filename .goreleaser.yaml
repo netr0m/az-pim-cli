@@ -7,14 +7,24 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - binary: az-pim-cli
-    ldflags: -s -w -X main.version={{ .Version }} -X main.commit={{ .ShortCommit }} -X main.date={{ .Date }}
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
+  - id: default
+    binary: az-pim-cli
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .ShortCommit }}
+      - -X main.date={{ .CommitDate }}
+      - -X main.tag={{ .Tag }}
+    flags: [-trimpath]
+    asmflags:
+      - all=-trimpath={{ .ProjectDir }}
+    gcflags:
+      - all=-trimpath={{ .ProjectDir }}
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    env: [CGO_ENABLED=0]
+    goos: [linux, windows, darwin]
+    goarch: [amd64, arm64]
+    goarm: ['6', '7']
 
 archives:
   - format: tar.gz
