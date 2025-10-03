@@ -27,10 +27,11 @@ builds:
     goarm: ['6', '7']
 
 archives:
-  - format: tar.gz
+  - id: compressed
+    formats: [tar.gz]
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
     wrap_in_directory: true
     name_template: >-
       {{ .ProjectName }}-{{ .Version }}-
@@ -41,6 +42,7 @@ archives:
       - LICENSE
       - README.md
       - CHANGELOG.md
+    ids: [default]
 
 checksum:
   name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
