@@ -60,6 +60,7 @@ archives:
 
 checksum:
   name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
+  algorithm: sha256
 
 sboms:
   - id: sbom-compressed
