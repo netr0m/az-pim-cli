@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/netr0m/az-pim-cli/compare/v1.9.0...v1.10.0) (2025-10-03)
+
+
+### Build
+
+* **goreleaser:** include macos-universal binary in release archives ([#107](https://github.com/netr0m/az-pim-cli/issues/107)) ([6e63b46](https://github.com/netr0m/az-pim-cli/commit/6e63b4636f28c8d99cf36d61a1d759fa98ac5021))
+
 ## [1.9.0](https://github.com/netr0m/az-pim-cli/compare/v1.8.0...v1.9.0) (2025-10-03)
 
 
