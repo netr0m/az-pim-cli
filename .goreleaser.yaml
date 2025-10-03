@@ -4,32 +4,73 @@ project_name: az-pim-cli
 version: 2
 
 before:
-  hooks:
-    - go mod tidy
+  hooks: [go mod tidy]
+
 builds:
-  - binary: az-pim-cli
-    ldflags: -s -w -X main.version={{ .Version }} -X main.commit={{ .ShortCommit }} -X main.date={{ .Date }}
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
+  - id: default
+    binary: az-pim-cli
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .ShortCommit }}
+      - -X main.date={{ .CommitDate }}
+      - -X main.tag={{ .Tag }}
+    flags: [-trimpath]
+    asmflags:
+      - all=-trimpath={{ .ProjectDir }}
+    gcflags:
+      - all=-trimpath={{ .ProjectDir }}
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    env: [CGO_ENABLED=0]
+    goos: [linux, windows, darwin]
+    goarch: [amd64, arm64]
+    goarm: ['6', '7']
+
+universal_binaries:
+  - id: macos-universal
+    replace: true
+    ids: [default]
+    name_template: '{{ .ProjectName }}-{{ .Version }}-macos-universal'
 
 archives:
-  - format: tar.gz
+  - id: compressed
+    formats: [tar.gz]
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
     wrap_in_directory: true
-    name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    name_template: >-
+      {{ .ProjectName }}-{{ .Version }}-
+      {{- if eq .Os "darwin" -}}macos{{- else -}}{{ .Os }}{{- end -}}-
+      {{- if eq .Arch "amd64" -}}x86_64{{- else -}}{{ .Arch }}{{- end -}}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
     files:
       - LICENSE
       - README.md
       - CHANGELOG.md
+    ids: [default]
+  - id: binaries
+    formats: [binary]
+    name_template: >-
+      {{ .ProjectName }}-{{ .Version }}-
+      {{- if eq .Os "darwin" -}}macos{{- else -}}{{ .Os }}{{- end -}}-
+      {{- if eq .Arch "amd64" -}}x86_64{{- else -}}{{ .Arch }}{{- end -}}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    ids: [default]
 
 checksum:
   name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
+  algorithm: sha256
+
+sboms:
+  - id: sbom-compressed
+    artifacts: archive
+    documents:
+      - '{{ .ArtifactName }}.sbom.spdx.json'
+  - id: sbom-binaries
+    artifacts: binary
+    documents:
+      - '{{ .Binary }}_{{ .Version }}_{{- if eq .Os "darwin" -}}macos{{- else -}}{{ .Os }}{{- end -}}_{{- if eq .Arch "amd64" -}}x86_64{{- else -}}{{ .Arch }}{{- end -}}{{ if .Arm }}v{{ .Arm }}{{ end }}.sbom.spdx.json'
 
 changelog:
   sort: asc
@@ -45,7 +86,6 @@ changelog:
       order: 2
     - title: 'Other changes'
       order: 999
-
   filters:
     exclude:
       - "^.*test[(\\w)]*:"
