@@ -1,15 +1,5 @@
 # Changelog
 
-## [1.10.0](https://github.com/netr0m/az-pim-cli/compare/v1.9.0...v1.10.0) (2025-10-03)
-
-
-### Bug Fixes
-
-* **build/goreleaser:** remove incorrect template key usage ([#103](https://github.com/netr0m/az-pim-cli/issues/103)) ([314a599](https://github.com/netr0m/az-pim-cli/commit/314a59903d6668715dd227a12f2fa5b9cd191afe))
-
-## [1.9.0](https://github.com/netr0m/az-pim-cli/compare/v1.8.0...v1.9.0) (2025-10-03)
-
-
 ### Features
 
 * **goreleaser:** include binaries in release ([#101](https://github.com/netr0m/az-pim-cli/issues/101)) ([808cdf1](https://github.com/netr0m/az-pim-cli/commit/808cdf12ddd1b95f2e96b83b325683190d05f68f))
