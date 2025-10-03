@@ -58,16 +58,6 @@ checksum:
   name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
   algorithm: sha256
 
-sboms:
-  - id: sbom-compressed
-    artifacts: archive
-    documents:
-      - '{{ .ArtifactName }}.sbom.spdx.json'
-  - id: sbom-binaries
-    artifacts: binary
-    documents:
-      - '{{ .Binary }}_{{ .Version }}_{{- if eq .Os "darwin" -}}macos{{- else -}}{{ .Os }}{{- end -}}_{{- if eq .Arch "amd64" -}}x86_64{{- else -}}{{ .Arch }}{{- end -}}{{ if .Arm }}v{{ .Arm }}{{ end }}.sbom.spdx.json'
-
 changelog:
   sort: asc
   groups:
