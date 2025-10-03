@@ -16,10 +16,6 @@ builds:
       - -X main.date={{ .CommitDate }}
       - -X main.tag={{ .Tag }}
     flags: [-trimpath]
-    asmflags:
-      - all=-trimpath={{ .ProjectDir }}
-    gcflags:
-      - all=-trimpath={{ .ProjectDir }}
     mod_timestamp: '{{ .CommitTimestamp }}'
     env: [CGO_ENABLED=0]
     goos: [linux, windows, darwin]
