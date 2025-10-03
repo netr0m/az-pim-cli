@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.0](https://github.com/netr0m/az-pim-cli/compare/v1.7.0...v1.8.0) (2025-10-03)
+
+
+### Chores
+
+* **deps:** upgrade dependencies ([#99](https://github.com/netr0m/az-pim-cli/issues/99)) ([f4cf17c](https://github.com/netr0m/az-pim-cli/commit/f4cf17c62213f3273b2c9760cec9cffcffb39a9a))
+* upgrade dependencies ([f4cf17c](https://github.com/netr0m/az-pim-cli/commit/f4cf17c62213f3273b2c9760cec9cffcffb39a9a))
+
 ## [1.7.0](https://github.com/netr0m/az-pim-cli/compare/v1.6.1...v1.7.0) (2025-07-27)
 
 
