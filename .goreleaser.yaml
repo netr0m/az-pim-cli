@@ -4,8 +4,8 @@ project_name: az-pim-cli
 version: 2
 
 before:
-  hooks:
-    - go mod tidy
+  hooks: [go mod tidy]
+
 builds:
   - id: default
     binary: az-pim-cli
@@ -50,7 +50,7 @@ archives:
       - CHANGELOG.md
     ids: [default]
   - id: binaries
-    formats: binary
+    formats: [binary]
     name_template: >-
       {{ .ProjectName }}-{{ .Version }}-
       {{- if eq .Os "darwin" -}}macos{{- else -}}{{ .Os }}{{- end -}}-
@@ -86,7 +86,6 @@ changelog:
       order: 2
     - title: 'Other changes'
       order: 999
-
   filters:
     exclude:
       - "^.*test[(\\w)]*:"
