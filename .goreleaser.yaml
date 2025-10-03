@@ -26,6 +26,12 @@ builds:
     goarch: [amd64, arm64]
     goarm: ['6', '7']
 
+universal_binaries:
+  - id: macos-universal
+    replace: true
+    ids: [default]
+    name_template: '{{ .ProjectName }}-{{ .Version }}-macos-universal'
+
 archives:
   - id: compressed
     formats: [tar.gz]
@@ -42,6 +48,14 @@ archives:
       - LICENSE
       - README.md
       - CHANGELOG.md
+    ids: [default]
+  - id: binaries
+    formats: binary
+    name_template: >-
+      {{ .ProjectName }}-{{ .Version }}-
+      {{- if eq .Os "darwin" -}}macos{{- else -}}{{ .Os }}{{- end -}}-
+      {{- if eq .Arch "amd64" -}}x86_64{{- else -}}{{ .Arch }}{{- end -}}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
     ids: [default]
 
 checksum:
