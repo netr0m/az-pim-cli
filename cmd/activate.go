@@ -37,10 +37,10 @@ var activateResourceCmd = &cobra.Command{
 	Aliases: []string{"r", "res", "resource", "resources", "sub", "subs", "subscriptions"},
 	Short:   "Sends a request to Azure PIM to activate the given resource (azure resources)",
 	Run: func(cmd *cobra.Command, args []string) {
-		token := pim.GetAccessToken(pim.AZ_PIM_SCOPE, pim.AzureClient{})
+		token := pim.GetAccessToken(AzureClientInstance.ARMBaseURL, AzureClientInstance)
 		subjectId := pim.GetUserInfo(token).ObjectId
 
-		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token, pim.AzureClient{})
+		eligibleResourceAssignments := pim.GetEligibleResourceAssignments(token, AzureClientInstance)
 		resourceAssignment := utils.GetResourceAssignment(name, prefix, roleName, eligibleResourceAssignments)
 		scope, assignmentRequest := pim.CreateResourceAssignmentRequest(subjectId, resourceAssignment, duration, startDate, startTime, reason, ticketSystem, ticketNumber)
 
@@ -53,6 +53,7 @@ var activateResourceCmd = &cobra.Command{
 			"ticketSystem", ticketSystem,
 			"duration", duration,
 			"startDateTime", assignmentRequest.Properties.ScheduleInfo.StartDateTime,
+			"cloud", azureEnv,
 		)
 
 		if dryRun {
@@ -61,13 +62,13 @@ var activateResourceCmd = &cobra.Command{
 		}
 		if validateOnly {
 			slog.Warn("Running validation only")
-			validationSuccessful := pim.ValidateResourceAssignmentRequest(scope, assignmentRequest, token, pim.AzureClient{})
+			validationSuccessful := pim.ValidateResourceAssignmentRequest(scope, assignmentRequest, token, AzureClientInstance)
 			if validationSuccessful {
 				os.Exit(0)
 			}
 			os.Exit(1)
 		}
-		requestResponse := pim.RequestResourceAssignment(scope, assignmentRequest, token, pim.AzureClient{})
+		requestResponse := pim.RequestResourceAssignment(scope, assignmentRequest, token, AzureClientInstance)
 		slog.Info(
 			"Request completed",
 			"role", resourceAssignment.Properties.ExpandedProperties.RoleDefinition.DisplayName,
@@ -83,7 +84,7 @@ func activateGovernanceRole(roleType string) {
 		os.Exit(1)
 	}
 	subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
-	eligibleAssignments := pim.GetEligibleGovernanceRoleAssignments(roleType, subjectId, pimGovernanceRoleToken, pim.AzureClient{})
+	eligibleAssignments := pim.GetEligibleGovernanceRoleAssignments(roleType, subjectId, pimGovernanceRoleToken, AzureClientInstance)
 	roleAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleAssignments)
 	roleType, assignmentRequest := pim.CreateGovernanceRoleAssignmentRequest(subjectId, roleType, roleAssignment, duration, startDate, startTime, reason, ticketSystem, ticketNumber)
 
@@ -96,6 +97,7 @@ func activateGovernanceRole(roleType string) {
 		"ticketSystem", ticketSystem,
 		"duration", duration,
 		"startDateTime", assignmentRequest.Schedule.StartDateTime,
+		"cloud", azureEnv,
 	)
 
 	if dryRun {
@@ -104,13 +106,13 @@ func activateGovernanceRole(roleType string) {
 	}
 	if validateOnly {
 		slog.Warn("Running validation only")
-		validationSuccessful := pim.ValidateGovernanceRoleAssignmentRequest(roleType, assignmentRequest, pimGovernanceRoleToken, pim.AzureClient{})
+		validationSuccessful := pim.ValidateGovernanceRoleAssignmentRequest(roleType, assignmentRequest, pimGovernanceRoleToken, AzureClientInstance)
 		if validationSuccessful {
 			os.Exit(0)
 		}
 		os.Exit(1)
 	}
-	requestResponse := pim.RequestGovernanceRoleAssignment(roleType, assignmentRequest, pimGovernanceRoleToken, pim.AzureClient{})
+	requestResponse := pim.RequestGovernanceRoleAssignment(roleType, assignmentRequest, pimGovernanceRoleToken, AzureClientInstance)
 	slog.Info(
 		"Request completed",
 		"role", roleAssignment.RoleDefinition.DisplayName,

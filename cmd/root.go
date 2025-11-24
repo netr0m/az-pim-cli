@@ -9,20 +9,35 @@ import (
 	"strings"
 
 	"github.com/netr0m/az-pim-cli/pkg/common"
+	"github.com/netr0m/az-pim-cli/pkg/pim"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-var debugLogging bool
-var cfgFile string
-var pimGovernanceRoleToken string
+var (
+	debugLogging           bool
+	cfgFile                string
+	pimGovernanceRoleToken string
+	azureEnv               string
+	AzureClientInstance    pim.AzureClient
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "az-pim-cli",
 	Short: "A utility to list and activate Azure AD PIM roles from the CLI",
 	Long: `az-pim-cli is a utility that allows the user to list and activate eligible role assignments
 	from Azure Entra ID Privileged Identity Management (PIM) directly from the command line.`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		armBaseURL, ok := pim.ARM_BASE_URLS[azureEnv]
+		if !ok {
+			fmt.Printf("Invalid value for --cloud: %q (allowed: global, usgov, china)\n", azureEnv)
+			os.Exit(1)
+		}
+		AzureClientInstance = pim.AzureClient{
+			ARMBaseURL: armBaseURL,
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -40,6 +55,7 @@ func init() {
 	// Global flags
 	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Enable debug logging")
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.az-pim-cli.yaml)")
+	rootCmd.PersistentFlags().StringVar(&azureEnv, "cloud", "global", "Which Azure environment to use ('global', 'usgov', 'china')")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -92,6 +108,5 @@ func bindFlags(cmd *cobra.Command, vpr *viper.Viper) {
 			val := vpr.Get(configName)
 			cmd.Flags().Set(flg.Name, fmt.Sprintf("%v", val)) //nolint:errcheck
 		}
-
 	})
 }
