@@ -32,7 +32,9 @@ type Client interface {
 }
 
 // Azure Client implementation
-type AzureClient struct{}
+type AzureClient struct {
+	ARMBaseURL string
+}
 
 // Implementation of the GetAccessToken call
 func (c AzureClient) GetAccessToken(scope string) string {
@@ -102,7 +104,7 @@ func Request(request *PIMRequest, responseModel any) any {
 	// Prepare request body
 	var req *http.Request
 	var err error
-	var _error = common.Error{
+	_error := common.Error{
 		Operation: "Request",
 	}
 
@@ -187,13 +189,13 @@ func Request(request *PIMRequest, responseModel any) any {
 }
 
 func (c AzureClient) GetEligibleResourceAssignments(token string) *ResourceAssignmentResponse {
-	var params = map[string]string{
+	params := map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
 		"$filter":     "asTarget()",
 	}
 	responseModel := &ResourceAssignmentResponse{}
 	_ = Request(&PIMRequest{
-		Url:    fmt.Sprintf("%s/%s/roleEligibilityScheduleInstances", AZ_PIM_BASE_URL, AZ_PIM_BASE_PATH),
+		Url:    fmt.Sprintf("%s/%s/roleEligibilityScheduleInstances", c.ARMBaseURL, ARM_BASE_PATH),
 		Token:  token,
 		Method: "GET",
 		Params: params,
@@ -215,13 +217,13 @@ func (c AzureClient) GetEligibleGovernanceRoleAssignments(roleType string, subje
 		slog.Error(_error.Error())
 		os.Exit(1)
 	}
-	var params = map[string]string{
+	params := map[string]string{
 		"$expand": "linkedEligibleRoleAssignment,subject,scopedResource,roleDefinition($expand=resource)",
 		"$filter": fmt.Sprintf("(subject/id eq '%s') and (assignmentState eq 'Eligible')", subjectId),
 	}
 	responseModel := &GovernanceRoleAssignmentResponse{}
 	_ = Request(&PIMRequest{
-		Url:    fmt.Sprintf("%s/%s/%s/roleAssignments", AZ_PIM_GOV_ROLE_BASE_URL, AZ_PIM_GOV_ROLE_BASE_PATH, roleType),
+		Url:    fmt.Sprintf("%s/%s/%s/roleAssignments", AZ_RBAC_BASE_URL, AZ_RBAC_BASE_PATH, roleType),
 		Token:  token,
 		Method: "GET",
 		Params: params,
@@ -235,7 +237,7 @@ func GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, tok
 }
 
 func (c AzureClient) ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) bool {
-	var params = map[string]string{
+	params := map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
 	}
 
@@ -246,9 +248,9 @@ func (c AzureClient) ValidateResourceAssignmentRequest(scope string, resourceAss
 	_ = Request(&PIMRequest{
 		Url: fmt.Sprintf(
 			"%s/%s/%s/roleAssignmentScheduleRequests/%s/validate",
-			AZ_PIM_BASE_URL,
+			c.ARMBaseURL,
 			scope,
-			AZ_PIM_BASE_PATH,
+			ARM_BASE_PATH,
 			uuid.NewString(),
 		),
 		Token:   token,
@@ -265,7 +267,7 @@ func ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest *
 }
 
 func (c AzureClient) ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) bool {
-	var params = map[string]string{
+	params := map[string]string{
 		"evaluateOnly": "true",
 	}
 
@@ -273,7 +275,7 @@ func (c AzureClient) ValidateGovernanceRoleAssignmentRequest(roleType string, ro
 
 	validationResponse := &GovernanceRoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
-		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_PIM_GOV_ROLE_BASE_URL, AZ_PIM_GOV_ROLE_BASE_PATH, roleType),
+		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_RBAC_BASE_URL, AZ_RBAC_BASE_PATH, roleType),
 		Token:   token,
 		Method:  "POST",
 		Params:  params,
@@ -288,7 +290,7 @@ func ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequ
 }
 
 func (c AzureClient) RequestResourceAssignment(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) *ResourceAssignmentRequestResponse {
-	var params = map[string]string{
+	params := map[string]string{
 		"api-version": AZ_PIM_API_VERSION,
 	}
 
@@ -296,9 +298,9 @@ func (c AzureClient) RequestResourceAssignment(scope string, resourceAssignmentR
 	_ = Request(&PIMRequest{
 		Url: fmt.Sprintf(
 			"%s/%s/%s/roleAssignmentScheduleRequests/%s",
-			AZ_PIM_BASE_URL,
+			c.ARMBaseURL,
 			scope,
-			AZ_PIM_BASE_PATH,
+			ARM_BASE_PATH,
 			uuid.NewString(),
 		),
 		Token:   token,
@@ -319,7 +321,7 @@ func RequestResourceAssignment(scope string, resourceAssignmentRequest *Resource
 func (c AzureClient) RequestGovernanceRoleAssignment(roleType string, governanceRoleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) *GovernanceRoleAssignmentRequestResponse {
 	responseModel := &GovernanceRoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
-		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_PIM_GOV_ROLE_BASE_URL, AZ_PIM_GOV_ROLE_BASE_PATH, roleType),
+		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_RBAC_BASE_URL, AZ_RBAC_BASE_PATH, roleType),
 		Token:   token,
 		Method:  "POST",
 		Payload: governanceRoleAssignmentRequest,

@@ -24,23 +24,23 @@ func (m *mockClient) GetAccessToken(scope string) string {
 func TestGetAccessToken(t *testing.T) {
 	m := newMockClient()
 
-	m.On("GetAccessToken", AZ_PIM_SCOPE).Return(TEST_DUMMY_JWT)
+	m.On("GetAccessToken", ARM_GLOBAL_BASE_URL).Return(TEST_DUMMY_JWT)
 
-	token := GetAccessToken(AZ_PIM_SCOPE, m)
+	token := GetAccessToken(ARM_GLOBAL_BASE_URL, m)
 
 	if !strings.HasPrefix(token, "ey") {
 		t.Errorf("expected token to start with 'ey', got %s", token)
 	}
 
-	m.AssertCalled(t, "GetAccessToken", AZ_PIM_SCOPE)
+	m.AssertCalled(t, "GetAccessToken", ARM_GLOBAL_BASE_URL)
 }
 
 func TestGetUserInfo(t *testing.T) {
 	m := newMockClient()
 
-	m.On("GetAccessToken", AZ_PIM_SCOPE).Return(TEST_DUMMY_JWT)
+	m.On("GetAccessToken", ARM_GLOBAL_BASE_URL).Return(TEST_DUMMY_JWT)
 
-	token := GetAccessToken(AZ_PIM_SCOPE, m)
+	token := GetAccessToken(ARM_GLOBAL_BASE_URL, m)
 	userInfo := GetUserInfo(token)
 
 	if userInfo.Email != TEST_DUMMY_PRINCIPAL_EMAIL {

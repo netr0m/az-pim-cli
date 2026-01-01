@@ -49,6 +49,7 @@ Available Commands:
   version     Display the version of az-pim-cli
 
 Flags:
+      --cloud string    Which Azure environment to use ('global', 'usgov', 'china') (default "global")
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
       --debug           Enable debug logging
   -h, --help            help for az-pim-cli
@@ -76,6 +77,7 @@ Flags:
   -h, --help   help for resource
 
 Global Flags:
+      --cloud string    Which Azure environment to use ('global', 'usgov', 'china') (default "global")
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
       --debug           Enable debug logging
 
@@ -98,9 +100,10 @@ Aliases:
 
 Flags:
   -h, --help           help for group
-  -t, --token string   An access token for the PIM Groups API (required). Consult the README for more information.
+  -t, --token string   An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.
 
 Global Flags:
+      --cloud string    Which Azure environment to use ('global', 'usgov', 'china') (default "global")
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
       --debug           Enable debug logging
 
@@ -126,6 +129,7 @@ Flags:
   -t, --token string   An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.
 
 Global Flags:
+      --cloud string    Which Azure environment to use ('global', 'usgov', 'china') (default "global")
   -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
       --debug           Enable debug logging
 
@@ -150,6 +154,7 @@ Flags:
   -h, --help   help for resource
 
 Global Flags:
+      --cloud string           Which Azure environment to use ('global', 'usgov', 'china') (default "global")
   -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
       --debug                  Enable debug logging
       --dry-run                Display the resource that would be activated, without requesting the activation
@@ -186,6 +191,7 @@ Flags:
   -t, --token string   An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.
 
 Global Flags:
+      --cloud string           Which Azure environment to use ('global', 'usgov', 'china') (default "global")
   -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
       --debug                  Enable debug logging
       --dry-run                Display the resource that would be activated, without requesting the activation
@@ -222,6 +228,7 @@ Flags:
   -t, --token string   An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.
 
 Global Flags:
+      --cloud string           Which Azure environment to use ('global', 'usgov', 'china') (default "global")
   -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
       --debug                  Enable debug logging
       --dry-run                Display the resource that would be activated, without requesting the activation
@@ -323,6 +330,7 @@ reason: static-reason
 ticketSystem: System
 ticketNumber: T-1337
 duration: 5
+cloud: global
 ```
 
 #### Environment variables
@@ -330,7 +338,7 @@ You may also define these configuration options as environment variables by pref
 
 ```bash
 export PIM_TOKEN=eyJ0[...]
-
+export PIM_CLOUD=global
 ```
 
 ### Token for Entra ID Groups and Roles
