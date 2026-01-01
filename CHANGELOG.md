@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/netr0m/az-pim-cli/compare/v1.10.0...v1.11.0) (2026-01-01)
+
+
+### Features
+
+* add support for additional Azure environments (us gov, china) ([#111](https://github.com/netr0m/az-pim-cli/issues/111)) ([b180576](https://github.com/netr0m/az-pim-cli/commit/b1805761e280d6c0db39cd30a51d2b35cd0e7685))
+
 ## [1.10.0](https://github.com/netr0m/az-pim-cli/compare/v1.9.0...v1.10.0) (2025-10-03)
 
 
