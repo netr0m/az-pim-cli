@@ -33,8 +33,9 @@ var listGroupCmd = &cobra.Command{
 	Aliases: []string{"g", "grp", "groups"},
 	Short:   "Query Azure PIM for eligible group assignments",
 	Run: func(cmd *cobra.Command, args []string) {
-		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
-		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, pimGovernanceRoleToken, AzureClientInstance)
+		token := pim.GetAccessToken(AzureClientInstance.ASMScope, AzureClientInstance)
+		subjectId := pim.GetUserInfo(token).ObjectId
+		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, token, AzureClientInstance)
 		utils.PrintEligibleGovernanceRoles(eligibleGroupAssignments)
 	},
 }
@@ -44,8 +45,9 @@ var listEntraRoleCmd = &cobra.Command{
 	Aliases: []string{"rl", "role", "roles"},
 	Short:   "Query Azure PIM for eligible Entra role assignments",
 	Run: func(cmd *cobra.Command, args []string) {
-		subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
-		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_ENTRA_ROLES, subjectId, pimGovernanceRoleToken, AzureClientInstance)
+		token := pim.GetAccessToken(AzureClientInstance.ASMScope, AzureClientInstance)
+		subjectId := pim.GetUserInfo(token).ObjectId
+		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_ENTRA_ROLES, subjectId, token, AzureClientInstance)
 		utils.PrintEligibleGovernanceRoles(eligibleEntraRoleAssignments)
 	},
 }
@@ -55,9 +57,4 @@ func init() {
 	listCmd.AddCommand(listResourceCmd)
 	listCmd.AddCommand(listGroupCmd)
 	listCmd.AddCommand(listEntraRoleCmd)
-
-	listGroupCmd.PersistentFlags().StringVarP(&pimGovernanceRoleToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
-	listGroupCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
-	listEntraRoleCmd.PersistentFlags().StringVarP(&pimGovernanceRoleToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
-	listEntraRoleCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
 }

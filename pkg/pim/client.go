@@ -34,6 +34,7 @@ type Client interface {
 // Azure Client implementation
 type AzureClient struct {
 	ARMBaseURL string
+	ASMScope   string
 }
 
 // Implementation of the GetAccessToken call
