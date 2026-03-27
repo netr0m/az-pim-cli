@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/netr0m/az-pim-cli/compare/v1.11.0...v1.12.0) (2026-03-27)
+
+
+### Features
+
+* **auth:** get token for pim governance roles ([#113](https://github.com/netr0m/az-pim-cli/issues/113)) ([ae74121](https://github.com/netr0m/az-pim-cli/commit/ae74121bed242016242dd13612c46f56e6bcc672))
+
 ## [1.11.0](https://github.com/netr0m/az-pim-cli/compare/v1.10.0...v1.11.0) (2026-01-01)
 
 
