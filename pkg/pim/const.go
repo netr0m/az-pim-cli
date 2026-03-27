@@ -39,9 +39,21 @@ const (
 	ROLE_TYPE_ENTRA_ROLES = "aadroles"
 )
 
+// Scope for the Azure Service Management (ASM) token (Entra Groups and Entra Roles)
+const (
+	ASM_GLOBAL_BASE_URL = "https://management.core.windows.net"
+)
+
 // Base URLs for different Azure environments
 var ARM_BASE_URLS = map[string]string{
 	"global": ARM_GLOBAL_BASE_URL,
+	"usgov":  ARM_USGOV_BASE_URL,
+	"china":  ARM_CN_BASE_URL,
+}
+
+// Scopes for the Entra roles/groups for different Azure environments
+var ASM_SCOPES = map[string]string{
+	"global": ASM_GLOBAL_BASE_URL,
 	"usgov":  ARM_USGOV_BASE_URL,
 	"china":  ARM_CN_BASE_URL,
 }

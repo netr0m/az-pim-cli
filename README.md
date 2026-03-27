@@ -33,6 +33,7 @@ See [Configuration options](#configuration-options) for more details
 This tool depends on [`az-cli`](https://learn.microsoft.com/en-us/cli/azure/) for authentication. Please ensure that you've authenticated with your Azure tenant by running the command `az login`. A new browser window will open, asking you to authenticate. This should only be necessary to do once.
 
 ## Usage
+
 ```bash
 $ az-pim-cli --help
 az-pim-cli is a utility that allows the user to list and activate eligible role assignments
@@ -64,76 +65,61 @@ Use "az-pim-cli [command] --help" for more information about a command.
 > List [azure resources](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/azurerbac)
 
 ```bash
-$ az-pim-cli list resources --help
-Query Azure PIM for eligible resource assignments (azure resources)
-
-Usage:
-  az-pim-cli list resource [flags]
-
-Aliases:
-  resource, r, res, resource, resources, sub, subs, subscriptions
-
-Flags:
-  -h, --help   help for resource
-
-Global Flags:
-      --cloud string    Which Azure environment to use ('global', 'usgov', 'china') (default "global")
-  -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
-      --debug           Enable debug logging
-
+$ az-pim-cli list resources
 ```
+
+<details>
+<summary>Example</summary>
+
+```bash
+# List eligible Azure resource role assignments
+$ az-pim-cli list resources
+== S100-Example-Subscription ==
+        - Contributor
+        - Owner
+== S1337-Another-Subscription ==
+        - Contributor
+```
+
+</details>
 
 #### Groups
 > List [groups](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup)
->
-> :warning: Requires an access token with the appropriate scope. See [Token for Entra ID Groups](#token-for-entra-id-groups) for more details.
 
 ```bash
-$ az-pim-cli list groups --help
-Query Azure PIM for eligible group assignments
-
-Usage:
-  az-pim-cli list group [flags]
-
-Aliases:
-  group, g, grp, groups
-
-Flags:
-  -h, --help           help for group
-  -t, --token string   An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.
-
-Global Flags:
-      --cloud string    Which Azure environment to use ('global', 'usgov', 'china') (default "global")
-  -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
-      --debug           Enable debug logging
-
+$ az-pim-cli list groups
 ```
+
+<details>
+<summary>Example</summary>
+
+```bash
+# List eligible group assignments
+$ az-pim-cli list groups
+== my-entra-id-group ==
+         - Owner
+```
+
+</details>
 
 #### Entra roles
 > List [entra roles](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadmigratedroles)
->
-> :warning: Requires an access token with the appropriate scope. See [Token for Entra ID Groups and Roles](#token-for-entra-id-groups-and-roles) for more details.
 
 ```bash
-$ az-pim-cli list roles --help
-Query Azure PIM for eligible Entra role assignments
-
-Usage:
-  az-pim-cli list role [flags]
-
-Aliases:
-  role, rl, role, roles
-
-Flags:
-  -h, --help           help for role
-  -t, --token string   An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.
-
-Global Flags:
-      --cloud string    Which Azure environment to use ('global', 'usgov', 'china') (default "global")
-  -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
-      --debug           Enable debug logging
-
+$ az-pim-cli list roles
 ```
+
+<details>
+<summary>Example</summary>
+
+```bash
+# List eligible Entra role assignments
+$ az-pim-cli list roles
+== my-entra-id-role ==
+         - Owner
+```
+
+</details>
 
 ### Activate a role
 
@@ -141,121 +127,13 @@ Global Flags:
 > Activate [azure resources](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/azurerbac)
 
 ```bash
-$ az-pim-cli activate resource --help
-Sends a request to Azure PIM to activate the given resource (azure resources)
-
-Usage:
-  az-pim-cli activate resource [flags]
-
-Aliases:
-  resource, r, res, resource, resources, sub, subs, subscriptions
-
-Flags:
-  -h, --help   help for resource
-
-Global Flags:
-      --cloud string           Which Azure environment to use ('global', 'usgov', 'china') (default "global")
-  -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
-      --debug                  Enable debug logging
-      --dry-run                Display the resource that would be activated, without requesting the activation
-  -d, --duration int           Duration in minutes that the role should be activated for (default 480)
-  -n, --name string            The name of the resource to activate
-  -p, --prefix string          The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
-      --reason string          Reason for the activation (default "config")
-  -r, --role string            Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')
-      --start-date string      Start date for the activation (as DD/MM/YYYY)
-  -s, --start-time string      Start time for the activation (as HH:MM)
-  -T, --ticket-number string   Ticket number for the activation
-      --ticket-system string   Ticket system for the activation
-  -v, --validate-only          Send the request to the validation endpoint of Azure PIM, without requesting the activation
-
+$ az-pim-cli activate resource
 ```
 
-#### Groups
-> Activate [groups](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup)
->
-> :warning: Requires an access token with the appropriate scope. See [Token for Entra ID Groups](#token-for-entra-id-groups) for more details.
+<details>
+<summary>Examples</summary>
 
 ```bash
-$ az-pim-cli activate group --help
-Sends a request to Azure PIM to activate the given group
-
-Usage:
-  az-pim-cli activate group [flags]
-
-Aliases:
-  group, g, grp, groups
-
-Flags:
-  -h, --help           help for group
-  -t, --token string   An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.
-
-Global Flags:
-      --cloud string           Which Azure environment to use ('global', 'usgov', 'china') (default "global")
-  -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
-      --debug                  Enable debug logging
-      --dry-run                Display the resource that would be activated, without requesting the activation
-  -d, --duration int           Duration in minutes that the role should be activated for (default 480)
-  -n, --name string            The name of the resource to activate
-  -p, --prefix string          The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
-      --reason string          Reason for the activation (default "config")
-  -r, --role string            Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')
-      --start-date string      Start date for the activation (as DD/MM/YYYY)
-  -s, --start-time string      Start time for the activation (as HH:MM)
-  -T, --ticket-number string   Ticket number for the activation
-      --ticket-system string   Ticket system for the activation
-  -v, --validate-only          Send the request to the validation endpoint of Azure PIM, without requesting the activation
-
-```
-
-#### Entra roles
-> Activate [entra roles](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadmigratedroles)
->
-> :warning: Requires an access token with the appropriate scope. See [Token for Entra ID Groups and Roles](#token-for-entra-id-groups-and-roles) for more details.
-
-```bash
-$ az-pim-cli activate role --help
-Sends a request to Azure PIM to activate the given Entra role
-
-Usage:
-  az-pim-cli activate role [flags]
-
-Aliases:
-  role, rl, role, roles
-
-Flags:
-  -h, --help           help for role
-  -t, --token string   An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.
-
-Global Flags:
-      --cloud string           Which Azure environment to use ('global', 'usgov', 'china') (default "global")
-  -c, --config string          config file (default is $HOME/.az-pim-cli.yaml)
-      --debug                  Enable debug logging
-      --dry-run                Display the resource that would be activated, without requesting the activation
-  -d, --duration int           Duration in minutes that the role should be activated for (default 480)
-  -n, --name string            The name of the resource to activate
-  -p, --prefix string          The name prefix of the resource to activate (e.g. 'S399'). Alternative to 'name'.
-      --reason string          Reason for the activation (default "config")
-  -r, --role string            Specify the role to activate, if multiple roles are found for a resource (e.g. 'Owner' and 'Contributor')
-      --start-date string      Start date for the activation (as DD/MM/YYYY)
-  -s, --start-time string      Start time for the activation (as HH:MM)
-  -T, --ticket-number string   Ticket number for the activation
-      --ticket-system string   Ticket system for the activation
-  -v, --validate-only          Send the request to the validation endpoint of Azure PIM, without requesting the activation
-
-```
-
-### Examples
-#### Azure resources
-```bash
-# List eligible Azure resource role assignments
-$ az-pim-cli list resources
-== S100-Example-Subscription ==
-         - Contributor
-         - Owner
-== S1337-Another-Subscription ==
-         - Contributor
-
 # Activate the first matching role for a resource with the prefix 'S100'
 $ az-pim-cli activate resource --prefix S100
 time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Contributor scope=S100-Example-Subscription reason="" ticketNumber="" ticketSystem="" duration=480 startDateTime=""
@@ -287,13 +165,21 @@ time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request w
 time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=S100-Example-Subscription status=Provisioned
 ```
 
-#### Groups
-```bash
-# List eligible group assignments
-$ az-pim-cli list groups
-== my-entra-id-group ==
-         - Owner
+</details>
 
+#### Groups
+> Activate [groups](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup)
+
+```bash
+$ az-pim-cli activate group
+```
+
+<details>
+<summary>Example</summary>
+
+> :information_source: See examples under [Activate - Azure resources](#azure-resources-1) for additional parameters.
+
+```bash
 # Activate the first matching role for the group 'my-entra-id-group'
 $ az-pim-cli activate group --name my-entra-id-group --duration 5
 time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=my-entra-id-group reason="" ticketNumber="" ticketSystem="" duration=5 startDateTime=""
@@ -301,13 +187,20 @@ time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request w
 time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=my-entra-id-group status=Active
 ```
 
-#### Entra roles
-```bash
-# List eligible Entra role assignments
-$ az-pim-cli list roles
-== my-entra-id-role ==
-         - Owner
+</details>
 
+#### Entra roles
+> Activate [entra roles](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadmigratedroles)
+
+```bash
+$ az-pim-cli activate role
+```
+<details>
+<summary>Example</summary>
+
+> :information_source: See examples under [Activate - Azure resources](#azure-resources-1) for additional parameters.
+
+```bash
 # Activate the first matching role for the Entra role 'my-entra-id-role'
 $ az-pim-cli activate role --name my-entra-id-role --duration 5
 time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=my-entra-id-role reason="" ticketNumber="" ticketSystem="" duration=5 startDateTime=""
@@ -315,9 +208,9 @@ time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request w
 time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=my-entra-id-role status=Active
 ```
 
-### Configuration options
+</details>
 
-- `token`: The Bearer token to use for authorization when requesting the Azure PIM Groups endpoint, i.e. listing/activating Azure PIM Groups and Entra Roles
+### Configuration options
 
 #### YAML file
 You may define configuration options in a YAML file.
@@ -325,7 +218,6 @@ By default, the program will use the file ~/.az-pim-cli.yaml ($HOME/.az-pim-cli.
 
 ```bash
 $ cat ~/.az-pim-cli.yaml
-token: eyJ0[...]
 reason: static-reason
 ticketSystem: System
 ticketNumber: T-1337
@@ -337,26 +229,9 @@ cloud: global
 You may also define these configuration options as environment variables by prefixing any global variable with `PIM_`.
 
 ```bash
-export PIM_TOKEN=eyJ0[...]
+export PIM_DURATION=30
 export PIM_CLOUD=global
 ```
-
-### Token for Entra ID Groups and Roles
-Due to limitations with authorization for Azure PIM, this software may only acquire a token authorized for listing and activating ['Azure resources' roles](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/azurerbac).
-In order to list or activate ['Entra groups'](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup) and ['Entra roles'](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadmigratedroles), you must acquire a token from an authenticated browser session. This token will have a limited lifetime, which means you'll likely have to perform this step each time you wish to activate or list Entra groups.
-
-To acquire the token, do the following:
-1. Navigate to ['Microsoft Entra Privileged Identity Management > Activate > Groups'](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup) or ['Microsoft Entra Privileged Identity Management > Activate > Microsoft Entra roles'](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadmigratedroles)
-2. Open *DevTools* (`CTRL+Shift+I`), and locate a request to `https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/aadGroups/roleAssignments` or `https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/aadroles/roleAssignments`
-    - If no such request can be seen, press the "Refresh" button above the table to issue a new request
-    - In *DevTools*, the "File" attribute should start with "roleAssignments"
-3. In *DevTools*, under the "Headers" tab for the given request, copy the value of the `Authorization` header, which should start with "Bearer eyJ0[...]"
-4. Remove the prefix "Bearer" from the value, resulting in "eyJ0[...]"
-5. Set an environment variable or config file value according to the description in [Configuration options](#configuration-options), e.g.
-  ```
-  PIM_TOKEN=eyJ0[...]
-  ```
-6. You may now, and for the duration of the token's lifetime, list and activate 'Entra groups' and 'Entra roles' using this tool
 
 ### Troubleshooting
 

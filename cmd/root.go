@@ -16,11 +16,10 @@ import (
 )
 
 var (
-	debugLogging           bool
-	cfgFile                string
-	pimGovernanceRoleToken string
-	azureEnv               string
-	AzureClientInstance    pim.AzureClient
+	debugLogging        bool
+	cfgFile             string
+	azureEnv            string
+	AzureClientInstance pim.AzureClient
 )
 
 var rootCmd = &cobra.Command{
@@ -34,8 +33,14 @@ var rootCmd = &cobra.Command{
 			fmt.Printf("Invalid value for --cloud: %q (allowed: global, usgov, china)\n", azureEnv)
 			os.Exit(1)
 		}
+		asmScope, ok := pim.ASM_SCOPES[azureEnv]
+		if !ok {
+			fmt.Printf("Could not find matching ASM scope for the environment %q\n", azureEnv)
+			os.Exit(1)
+		}
 		AzureClientInstance = pim.AzureClient{
 			ARMBaseURL: armBaseURL,
+			ASMScope:   asmScope,
 		}
 	},
 }

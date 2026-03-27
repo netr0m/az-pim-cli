@@ -83,8 +83,10 @@ func activateGovernanceRole(roleType string) {
 		slog.Error("Invalid role type specified.")
 		os.Exit(1)
 	}
-	subjectId := pim.GetUserInfo(pimGovernanceRoleToken).ObjectId
-	eligibleAssignments := pim.GetEligibleGovernanceRoleAssignments(roleType, subjectId, pimGovernanceRoleToken, AzureClientInstance)
+	token := pim.GetAccessToken(AzureClientInstance.ARMBaseURL, AzureClientInstance)
+	subjectId := pim.GetUserInfo(token).ObjectId
+
+	eligibleAssignments := pim.GetEligibleGovernanceRoleAssignments(roleType, subjectId, token, AzureClientInstance)
 	roleAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleAssignments)
 	roleType, assignmentRequest := pim.CreateGovernanceRoleAssignmentRequest(subjectId, roleType, roleAssignment, duration, startDate, startTime, reason, ticketSystem, ticketNumber)
 
@@ -106,13 +108,13 @@ func activateGovernanceRole(roleType string) {
 	}
 	if validateOnly {
 		slog.Warn("Running validation only")
-		validationSuccessful := pim.ValidateGovernanceRoleAssignmentRequest(roleType, assignmentRequest, pimGovernanceRoleToken, AzureClientInstance)
+		validationSuccessful := pim.ValidateGovernanceRoleAssignmentRequest(roleType, assignmentRequest, token, AzureClientInstance)
 		if validationSuccessful {
 			os.Exit(0)
 		}
 		os.Exit(1)
 	}
-	requestResponse := pim.RequestGovernanceRoleAssignment(roleType, assignmentRequest, pimGovernanceRoleToken, AzureClientInstance)
+	requestResponse := pim.RequestGovernanceRoleAssignment(roleType, assignmentRequest, token, AzureClientInstance)
 	slog.Info(
 		"Request completed",
 		"role", roleAssignment.RoleDefinition.DisplayName,
@@ -158,12 +160,6 @@ func init() {
 	activateCmd.PersistentFlags().StringVarP(&ticketNumber, "ticket-number", "T", "", "Ticket number for the activation")
 	activateCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Display the resource that would be activated, without requesting the activation")
 	activateCmd.PersistentFlags().BoolVarP(&validateOnly, "validate-only", "v", false, "Send the request to the validation endpoint of Azure PIM, without requesting the activation")
-
-	activateGroupCmd.PersistentFlags().StringVarP(&pimGovernanceRoleToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
-	activateGroupCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
-
-	activateEntraRoleCmd.PersistentFlags().StringVarP(&pimGovernanceRoleToken, "token", "t", "", "An access token for the PIM 'Entra Roles' and 'Groups' API (required). Consult the README for more information.")
-	activateEntraRoleCmd.MarkPersistentFlagRequired("token") //nolint:errcheck
 
 	activateCmd.MarkFlagsOneRequired("name", "prefix")
 	activateCmd.MarkFlagsMutuallyExclusive("name", "prefix")
