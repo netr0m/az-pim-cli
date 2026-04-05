@@ -83,7 +83,7 @@ func activateGovernanceRole(roleType string) {
 		slog.Error("Invalid role type specified.")
 		os.Exit(1)
 	}
-	token := pim.GetAccessToken(AzureClientInstance.ARMBaseURL, AzureClientInstance)
+	token := pim.GetAccessToken(AzureClientInstance.ASMScope, AzureClientInstance)
 	subjectId := pim.GetUserInfo(token).ObjectId
 
 	eligibleAssignments := pim.GetEligibleGovernanceRoleAssignments(roleType, subjectId, token, AzureClientInstance)
