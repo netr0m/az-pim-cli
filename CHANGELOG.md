@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/netr0m/az-pim-cli/compare/v1.12.0...v1.13.0) (2026-04-05)
+
+
+### Bug Fixes
+
+* use right scope to generate pim token for groups and roles ([#115](https://github.com/netr0m/az-pim-cli/issues/115)) ([240c342](https://github.com/netr0m/az-pim-cli/commit/240c342e0a8b512c3e8b39ebc8ed212b7d5c0b28))
+
 ## [1.12.0](https://github.com/netr0m/az-pim-cli/compare/v1.11.0...v1.12.0) (2026-03-27)
 
 
