@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/netr0m/az-pim-cli/compare/v1.13.0...v1.14.0) (2026-04-17)
+
+
+### Chores
+
+* **deps:** update dependencies ([#119](https://github.com/netr0m/az-pim-cli/issues/119)) ([71b9349](https://github.com/netr0m/az-pim-cli/commit/71b9349a0c999a313cecc6f9f4e8ab60e1e65b7d))
+
 ## [1.13.0](https://github.com/netr0m/az-pim-cli/compare/v1.12.0...v1.13.0) (2026-04-05)
 
 
