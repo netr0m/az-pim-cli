@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"io"
+	"log/slog"
 	"os"
 	"runtime/debug"
 
@@ -33,10 +33,6 @@ type BuildInfo struct {
 func (b BuildInfo) String() string {
 	return fmt.Sprintf("az-pim-cli version %s (built with %s from %s on %s)",
 		b.Version, b.GoVersion, b.Commit, b.Date)
-}
-
-func printVersion(w io.Writer, info BuildInfo) {
-	fmt.Fprintln(w, info.String())
 }
 
 func createBuildInfo() BuildInfo {
@@ -90,12 +86,21 @@ var versionCmd = &cobra.Command{
 		if includeBuildInfo {
 			debugInfo, ok := debug.ReadBuildInfo()
 			if !ok {
-				fmt.Fprintln(os.Stderr, "Failed to read build info")
+				_, fmtErr := fmt.Fprintln(os.Stderr, "Failed to read build info")
+				if fmtErr != nil {
+					slog.Error("Failed to print error message")
+				}
 			}
-			fmt.Fprintln(os.Stdout, debugInfo)
+			_, fmtErr := fmt.Fprintln(os.Stdout, debugInfo)
+			if fmtErr != nil {
+				slog.Error("Failed to print build info")
+			}
 		}
 		info := createBuildInfo()
-		printVersion(os.Stdout, info)
+		_, fmtErr := fmt.Fprintln(os.Stdout, info)
+		if fmtErr != nil {
+			slog.Error("Failed to print version info")
+		}
 	},
 }
 
