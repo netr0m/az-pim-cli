@@ -137,7 +137,11 @@ func Request(request *PIMRequest, responseModel any) any {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		defer res.Body.Close()
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				slog.Error(fmt.Sprintf("Failed to close response body: %v", err))
+			}
+		}()
 		_error.Message = err.Error()
 		_error.Status = res.Status
 		_error.Err = err
@@ -147,7 +151,11 @@ func Request(request *PIMRequest, responseModel any) any {
 		slog.Debug(_error.Debug())
 		os.Exit(1)
 	}
-	defer res.Body.Close()
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			slog.Error(fmt.Sprintf("Failed to close response body: %v", err))
+		}
+	}()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
