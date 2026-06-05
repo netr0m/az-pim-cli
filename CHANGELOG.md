@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.15.0](https://github.com/netr0m/az-pim-cli/compare/v1.14.0...v1.15.0) (2026-06-05)
+
+
+### Features
+
+* **activate:** add support for activation at a narrower scope ([#122](https://github.com/netr0m/az-pim-cli/issues/122)) ([07194d0](https://github.com/netr0m/az-pim-cli/commit/07194d0c92352aaa37504ce9a36ee0612acaa666))
+
+
+### Bug Fixes
+
+* **list:** show help when no subcommand is provided ([#123](https://github.com/netr0m/az-pim-cli/issues/123)) ([cf93f0e](https://github.com/netr0m/az-pim-cli/commit/cf93f0ec5ede3a46604343451e1beadea1453d6c))
+
 ## [1.14.0](https://github.com/netr0m/az-pim-cli/compare/v1.13.0...v1.14.0) (2026-04-17)
 
 
