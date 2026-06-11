@@ -19,6 +19,9 @@ var (
 	debugLogging        bool
 	cfgFile             string
 	azureEnv            string
+	clientID            string
+	tenantID            string
+	useDeviceCode       bool
 	AzureClientInstance pim.AzureClient
 )
 
@@ -33,16 +36,47 @@ var rootCmd = &cobra.Command{
 			fmt.Printf("Invalid value for --cloud: %q (allowed: global, usgov, china)\n", azureEnv)
 			os.Exit(1)
 		}
-		asmScope, ok := pim.ASM_SCOPES[azureEnv]
+		graphBaseURL, ok := pim.GRAPH_BASE_URLS[azureEnv]
 		if !ok {
-			fmt.Printf("Could not find matching ASM scope for the environment %q\n", azureEnv)
+			fmt.Printf("Could not find matching Microsoft Graph base URL for the environment %q\n", azureEnv)
 			os.Exit(1)
 		}
+		graphScope, ok := pim.GRAPH_SCOPES[azureEnv]
+		if !ok {
+			fmt.Printf("Could not find matching Microsoft Graph scope for the environment %q\n", azureEnv)
+			os.Exit(1)
+		}
+		authorityHost, ok := pim.AAD_AUTHORITY_HOSTS[azureEnv]
+		if !ok {
+			fmt.Printf("Could not find matching authority host for the environment %q\n", azureEnv)
+			os.Exit(1)
+		}
+		authorityTenant := tenantID
+		if authorityTenant == "" {
+			authorityTenant = pim.AAD_DEFAULT_TENANT
+		}
 		AzureClientInstance = pim.AzureClient{
-			ARMBaseURL: armBaseURL,
-			ASMScope:   asmScope,
+			ARMBaseURL:    armBaseURL,
+			GraphBaseURL:  graphBaseURL,
+			GraphScope:    graphScope,
+			Authority:     fmt.Sprintf("%s/%s", authorityHost, authorityTenant),
+			ClientID:      clientID,
+			TenantID:      tenantID,
+			UseDeviceCode: useDeviceCode,
 		}
 	},
+}
+
+// requireGraphClient ensures a custom app registration is configured before
+// attempting PIM operations for groups or Entra roles (which require Microsoft
+// Graph access that the Azure CLI's built-in client cannot provide).
+func requireGraphClient() {
+	if AzureClientInstance.ClientID == "" {
+		fmt.Println("PIM for Groups and Entra roles requires a custom app registration.")
+		fmt.Println("Set --client-id and --tenant-id (or PIM_CLIENTID/PIM_TENANTID, or clientid/tenantid in ~/.az-pim-cli.yaml).")
+		fmt.Println("See the README for setup instructions.")
+		os.Exit(1)
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -61,6 +95,9 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Enable debug logging")
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.az-pim-cli.yaml)")
 	rootCmd.PersistentFlags().StringVar(&azureEnv, "cloud", "global", "Which Azure environment to use ('global', 'usgov', 'china')")
+	rootCmd.PersistentFlags().StringVar(&clientID, "client-id", "", "Client ID of the app registration used for PIM group/role activation via Microsoft Graph (or set PIM_CLIENTID / 'clientid' in config)")
+	rootCmd.PersistentFlags().StringVar(&tenantID, "tenant-id", "", "Microsoft Entra tenant ID for the app registration (or set PIM_TENANTID / 'tenantid' in config)")
+	rootCmd.PersistentFlags().BoolVar(&useDeviceCode, "device-code", false, "Use the device code sign-in flow instead of the interactive browser flow (for headless environments; may be blocked by Conditional Access)")
 }
 
 // initConfig reads in config file and ENV variables if set.

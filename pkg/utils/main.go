@@ -34,24 +34,37 @@ func PrintEligibleResources(resourceAssignments *pim.ResourceAssignmentResponse)
 	}
 }
 
-func PrintEligibleGovernanceRoles(governanceRoleAssignments *pim.GovernanceRoleAssignmentResponse) {
-	var eligibleGovernanceRoles = make(map[string][]string)
+func PrintEligibleGroups(groupAssignments *pim.GraphGroupEligibilityResponse) {
+	var eligibleGroups = make(map[string][]string)
 
-	for _, governanceRoleAssignment := range governanceRoleAssignments.Value {
-		slog.Debug(governanceRoleAssignment.Debug())
-		governanceRoleName := governanceRoleAssignment.RoleDefinition.Resource.DisplayName
-		roleName := governanceRoleAssignment.RoleDefinition.DisplayName
-		if _, ok := eligibleGovernanceRoles[governanceRoleName]; !ok {
-			eligibleGovernanceRoles[governanceRoleName] = []string{}
+	for i := range groupAssignments.Value {
+		instance := &groupAssignments.Value[i]
+		slog.Debug(instance.Debug())
+		groupName := "<unknown>"
+		if instance.Group != nil {
+			groupName = instance.Group.DisplayName
 		}
-		eligibleGovernanceRoles[governanceRoleName] = append(eligibleGovernanceRoles[governanceRoleName], roleName)
+		eligibleGroups[groupName] = append(eligibleGroups[groupName], instance.AccessId)
 	}
 
-	for govRole, rol := range eligibleGovernanceRoles {
-		fmt.Printf("== %s ==\n", govRole)
-		for role := range rol {
-			fmt.Printf("\t - %s\n", rol[role])
+	for groupName, accessIds := range eligibleGroups {
+		fmt.Printf("== %s ==\n", groupName)
+		for _, accessId := range accessIds {
+			fmt.Printf("\t - %s\n", accessId)
 		}
+	}
+}
+
+func PrintEligibleRoles(roleAssignments *pim.GraphRoleEligibilityResponse) {
+	fmt.Println("== Entra roles ==")
+	for i := range roleAssignments.Value {
+		instance := &roleAssignments.Value[i]
+		slog.Debug(instance.Debug())
+		roleName := "<unknown>"
+		if instance.RoleDefinition != nil {
+			roleName = instance.RoleDefinition.DisplayName
+		}
+		fmt.Printf("\t - %s\n", roleName)
 	}
 }
 
@@ -94,36 +107,72 @@ func GetResourceAssignment(name string, prefix string, role string, eligibleReso
 	return nil
 }
 
-func GetGovernanceRoleAssignment(name string, prefix string, role string, eligibleGovernanceRoleAssignments *pim.GovernanceRoleAssignmentResponse) *pim.GovernanceRoleAssignment {
+func GetEligibleGroupAssignment(name string, prefix string, role string, eligibleGroupAssignments *pim.GraphGroupEligibilityResponse) *pim.GraphGroupEligibilityInstance {
 	name = strings.ToLower(name)
 	prefix = strings.ToLower(prefix)
 	role = strings.ToLower(role)
-	for _, eligibleGovernanceRoleAssignment := range eligibleGovernanceRoleAssignments.Value {
-		var match *pim.GovernanceRoleAssignment = nil
-		currentGovernanceRoleName := strings.ToLower(eligibleGovernanceRoleAssignment.RoleDefinition.Resource.DisplayName)
-
-		if len(prefix) != 0 {
-			if strings.HasPrefix(currentGovernanceRoleName, prefix) {
-				match = &eligibleGovernanceRoleAssignment // #nosec G601 false positive with go >= v1.22
-			}
-		} else if len(name) != 0 {
-			if currentGovernanceRoleName == name {
-				match = &eligibleGovernanceRoleAssignment // #nosec G601 false positive with go >= v1.22
-			}
+	for i := range eligibleGroupAssignments.Value {
+		instance := &eligibleGroupAssignments.Value[i]
+		groupName := ""
+		if instance.Group != nil {
+			groupName = strings.ToLower(instance.Group.DisplayName)
 		}
 
-		if match != nil {
-			if role == "" {
-				return &eligibleGovernanceRoleAssignment
-			}
-			if strings.ToLower(eligibleGovernanceRoleAssignment.RoleDefinition.DisplayName) == role {
-				return &eligibleGovernanceRoleAssignment
+		var matched bool
+		if len(prefix) != 0 {
+			matched = strings.HasPrefix(groupName, prefix)
+		} else if len(name) != 0 {
+			matched = groupName == name
+		}
+
+		if matched {
+			// For groups, the "role" is the access type (member/owner)
+			if role == "" || strings.ToLower(instance.AccessId) == role {
+				return instance
 			}
 		}
 	}
 
 	var _error = common.Error{
-		Operation: "GetGovernanceRoleAssignment",
+		Operation: "GetEligibleGroupAssignment",
+		Message:   "Unable to find a group assignment matching the parameters",
+		Status:    "404",
+	}
+	slog.Error(_error.Error())
+	os.Exit(1)
+
+	return nil
+}
+
+func GetEligibleRoleAssignment(name string, prefix string, role string, eligibleRoleAssignments *pim.GraphRoleEligibilityResponse) *pim.GraphRoleEligibilityInstance {
+	name = strings.ToLower(name)
+	prefix = strings.ToLower(prefix)
+	role = strings.ToLower(role)
+	for i := range eligibleRoleAssignments.Value {
+		instance := &eligibleRoleAssignments.Value[i]
+		roleName := ""
+		if instance.RoleDefinition != nil {
+			roleName = strings.ToLower(instance.RoleDefinition.DisplayName)
+		}
+
+		var matched bool
+		if len(prefix) != 0 {
+			matched = strings.HasPrefix(roleName, prefix)
+		} else if len(name) != 0 {
+			matched = roleName == name
+		}
+
+		if matched {
+			// For Entra roles the container and the role are the same; '--role'
+			// (if provided) is matched against the same role display name.
+			if role == "" || roleName == role {
+				return instance
+			}
+		}
+	}
+
+	var _error = common.Error{
+		Operation: "GetEligibleRoleAssignment",
 		Message:   "Unable to find a role assignment matching the parameters",
 		Status:    "404",
 	}

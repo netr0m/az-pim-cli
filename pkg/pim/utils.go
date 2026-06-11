@@ -21,8 +21,8 @@ func IsResourceAssignmentRequestFailed(requestResponse *ResourceAssignmentReques
 	return false
 }
 
-func IsGovernanceRoleAssignmentRequestFailed(requestResponse *GovernanceRoleAssignmentRequestResponse) bool {
-	switch requestResponse.Status.SubStatus {
+func IsGraphRequestFailed(requestResponse *GraphAssignmentScheduleRequest) bool {
+	switch requestResponse.Status {
 	case StatusAdminDenied, StatusCanceled, StatusDenied, StatusFailed, StatusFailedAsResourceIsLocked, StatusInvalid, StatusRevoked, StatusTimedOut:
 		return true
 	}
@@ -37,8 +37,8 @@ func IsResourceAssignmentRequestPending(requestResponse *ResourceAssignmentReque
 	return false
 }
 
-func IsGovernanceRoleAssignmentRequestPending(requestResponse *GovernanceRoleAssignmentRequestResponse) bool {
-	switch requestResponse.Status.SubStatus {
+func IsGraphRequestPending(requestResponse *GraphAssignmentScheduleRequest) bool {
+	switch requestResponse.Status {
 	case StatusPendingAdminDecision, StatusPendingApproval, StatusPendingApprovalProvisioning, StatusPendingEvaluation, StatusPendingExternalProvisioning, StatusPendingProvisioning, StatusPendingRevocation, StatusPendingScheduleCreation:
 		return true
 	}
@@ -53,8 +53,8 @@ func IsResourceAssignmentRequestOK(requestResponse *ResourceAssignmentRequestRes
 	return false
 }
 
-func IsGovernanceRoleAssignmentRequestOK(requestResponse *GovernanceRoleAssignmentRequestResponse) bool {
-	switch requestResponse.Status.SubStatus {
+func IsGraphRequestOK(requestResponse *GraphAssignmentScheduleRequest) bool {
+	switch requestResponse.Status {
 	case StatusAccepted, StatusAdminApproved, StatusGranted, StatusProvisioned, StatusProvisioningStarted, StatusScheduleCreated:
 		return true
 	}
@@ -94,25 +94,24 @@ func (response *ResourceAssignmentRequestResponse) CheckResourceAssignmentResult
 	return false
 }
 
-func (response *GovernanceRoleAssignmentRequestResponse) CheckGovernanceRoleAssignmentResult(request *GovernanceRoleAssignmentRequest) bool {
-	if IsGovernanceRoleAssignmentRequestFailed(response) {
+func (response *GraphAssignmentScheduleRequest) CheckGraphRequestResult() bool {
+	if IsGraphRequestFailed(response) {
 		_error := common.Error{
-			Operation: "CheckGovernanceRoleAssignmentResult",
-			Message:   "The role assignment validation failed",
-			Status:    response.Status.Status,
-			Request:   request,
+			Operation: "CheckGraphRequestResult",
+			Message:   "The role assignment request failed",
+			Status:    response.Status,
 			Response:  response,
 		}
 		slog.Error(_error.Error())
 		slog.Debug(_error.Debug())
 		return false
 	}
-	if IsGovernanceRoleAssignmentRequestOK(response) {
-		slog.Info("The role assignment request was successful", "status", response.Status.Status, "subStatus", response.Status.SubStatus)
+	if IsGraphRequestOK(response) {
+		slog.Info("The role assignment request was successful", "status", response.Status)
 		return true
 	}
-	if IsGovernanceRoleAssignmentRequestPending(response) {
-		slog.Warn("The role assignment request is pending", "status", response.Status.Status, "subStatus", response.Status.SubStatus)
+	if IsGraphRequestPending(response) {
+		slog.Warn("The role assignment request is pending", "status", response.Status)
 		return true
 	}
 
@@ -214,52 +213,54 @@ func CreateResourceAssignmentRequestWithScope(subjectId string, resourceAssignme
 	return scope, resourceAssignmentRequest
 }
 
-func CreateGovernanceRoleAssignmentScheduleInfo(duration int, startDate string, startTime string) *GovernanceRoleAssignmentSchedule {
-	var scheduleStart interface{}
+func CreateGraphScheduleInfo(duration int, startDate string, startTime string) *GraphScheduleInfo {
+	var startDateTime *string
 	if (startDate != "") || (startTime != "") {
-		startDateTime, err := parseDateTime(startDate, startTime)
+		s, err := parseDateTime(startDate, startTime)
 		if err != nil {
 			slog.Error(err.Error())
 			slog.Debug(err.Debug())
 			os.Exit(1)
 		}
-		scheduleStart = startDateTime
+		startDateTime = &s
 	}
 
-	return &GovernanceRoleAssignmentSchedule{
-		Type:          "Once",
-		StartDateTime: scheduleStart,
-		EndDateTime:   nil,
-		Duration:      fmt.Sprintf("PT%dM", duration),
+	return &GraphScheduleInfo{
+		StartDateTime: startDateTime,
+		Expiration: &GraphScheduleInfoExpiration{
+			Type:     GRAPH_EXPIRATION_AFTER_DURATION,
+			Duration: fmt.Sprintf("PT%dM", duration),
+		},
 	}
 }
 
-func CreateGovernanceRoleAssignmentRequest(subjectId string, roleType string, governanceRoleAssignment *GovernanceRoleAssignment, duration int, startDate string, startTime string, reason string, ticketSystem string, ticketNumber string) (string, *GovernanceRoleAssignmentRequest) {
-	if !IsGovernanceRoleType(roleType) {
-		_error := common.Error{
-			Operation: "CreateGovernanceRoleAssignmentRequest",
-			Message:   "Invalid role type specified.",
-		}
-		slog.Error(_error.Error())
-		os.Exit(1)
+func CreateGraphGroupAssignmentRequest(principalId string, instance *GraphGroupEligibilityInstance, duration int, startDate string, startTime string, reason string, ticketSystem string, ticketNumber string) *GraphGroupAssignmentRequest {
+	return &GraphGroupAssignmentRequest{
+		Action:        GRAPH_ACTION_SELF_ACTIVATE,
+		AccessId:      instance.AccessId,
+		PrincipalId:   principalId,
+		GroupId:       instance.GroupId,
+		Justification: reason,
+		ScheduleInfo:  CreateGraphScheduleInfo(duration, startDate, startTime),
+		TicketInfo:    &GraphTicketInfo{TicketNumber: ticketNumber, TicketSystem: ticketSystem},
+	}
+}
+
+func CreateGraphRoleAssignmentRequest(principalId string, instance *GraphRoleEligibilityInstance, duration int, startDate string, startTime string, reason string, ticketSystem string, ticketNumber string) *GraphRoleAssignmentRequest {
+	directoryScopeId := instance.DirectoryScopeId
+	if directoryScopeId == "" {
+		directoryScopeId = GRAPH_DEFAULT_DIRECTORY_SCOPE
 	}
 
-	scheduleInfo := CreateGovernanceRoleAssignmentScheduleInfo(duration, startDate, startTime)
-	governanceRoleAssignmentRequest := &GovernanceRoleAssignmentRequest{
-		RoleDefinitionId:               governanceRoleAssignment.RoleDefinitionId,
-		ResourceId:                     governanceRoleAssignment.ResourceId,
-		SubjectId:                      subjectId,
-		AssignmentState:                "Active",
-		Type:                           "UserAdd",
-		Reason:                         reason,
-		TicketNumber:                   ticketNumber,
-		TicketSystem:                   ticketSystem,
-		Schedule:                       scheduleInfo,
-		LinkedEligibleRoleAssignmentId: governanceRoleAssignment.Id,
-		ScopedResourceId:               "",
+	return &GraphRoleAssignmentRequest{
+		Action:           GRAPH_ACTION_SELF_ACTIVATE,
+		PrincipalId:      principalId,
+		RoleDefinitionId: instance.RoleDefinitionId,
+		DirectoryScopeId: directoryScopeId,
+		Justification:    reason,
+		ScheduleInfo:     CreateGraphScheduleInfo(duration, startDate, startTime),
+		TicketInfo:       &GraphTicketInfo{TicketNumber: ticketNumber, TicketSystem: ticketSystem},
 	}
-
-	return roleType, governanceRoleAssignmentRequest
 }
 
 func (resourceAssignment *ResourceAssignment) Debug() string {
@@ -284,20 +285,29 @@ func (resourceAssignment *ResourceAssignment) Debug() string {
 	return strings.Join(debugLines, "\n")
 }
 
-func (roleAssignment *GovernanceRoleAssignment) Debug() string {
+func (instance *GraphGroupEligibilityInstance) Debug() string {
 	var debugLines []string
 
-	debugLines = append(debugLines, fmt.Sprintf("ID: %s", roleAssignment.Id))
-	debugLines = append(debugLines, fmt.Sprintf("\tResourceID: %s", roleAssignment.ResourceId))
-	debugLines = append(debugLines, fmt.Sprintf("\tRoleDefinitionId: %s", roleAssignment.RoleDefinitionId))
-	debugLines = append(debugLines, fmt.Sprintf("\tSubjectId: %s", roleAssignment.SubjectId))
-	debugLines = append(debugLines, fmt.Sprintf("\tAssignmentState: %s", roleAssignment.AssignmentState))
-	debugLines = append(debugLines, fmt.Sprintf("\tStatus: %s", roleAssignment.Status))
-	if roleAssignment.Subject != nil {
-		debugLines = append(debugLines, fmt.Sprintf("\tSubject: %s", roleAssignment.Subject.DisplayName))
+	debugLines = append(debugLines, fmt.Sprintf("ID: %s", instance.Id))
+	debugLines = append(debugLines, fmt.Sprintf("\tGroupId: %s", instance.GroupId))
+	debugLines = append(debugLines, fmt.Sprintf("\tAccessId: %s", instance.AccessId))
+	debugLines = append(debugLines, fmt.Sprintf("\tPrincipalId: %s", instance.PrincipalId))
+	if instance.Group != nil {
+		debugLines = append(debugLines, fmt.Sprintf("\tGroup: %s", instance.Group.DisplayName))
 	}
-	if roleAssignment.RoleDefinition != nil {
-		debugLines = append(debugLines, fmt.Sprintf("\tRoleDefinition: %s", roleAssignment.RoleDefinition.DisplayName))
+
+	return strings.Join(debugLines, "\n")
+}
+
+func (instance *GraphRoleEligibilityInstance) Debug() string {
+	var debugLines []string
+
+	debugLines = append(debugLines, fmt.Sprintf("ID: %s", instance.Id))
+	debugLines = append(debugLines, fmt.Sprintf("\tRoleDefinitionId: %s", instance.RoleDefinitionId))
+	debugLines = append(debugLines, fmt.Sprintf("\tDirectoryScopeId: %s", instance.DirectoryScopeId))
+	debugLines = append(debugLines, fmt.Sprintf("\tPrincipalId: %s", instance.PrincipalId))
+	if instance.RoleDefinition != nil {
+		debugLines = append(debugLines, fmt.Sprintf("\tRoleDefinition: %s", instance.RoleDefinition.DisplayName))
 	}
 
 	return strings.Join(debugLines, "\n")

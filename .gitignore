@@ -48,3 +48,6 @@ go.work
 az-pim-cli
 
 dist/
+
+# az-pim-cli token cache (MSAL device code flow)
+.az-pim-cli.cache.json

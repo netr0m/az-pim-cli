@@ -15,14 +15,8 @@ const (
 	ARM_CN_BASE_URL     = "https://management.chinacloudapi.cn"
 )
 
-// Base URL for the Azure RBAC (Governance Role) API (Entra Groups and Entra Roles)
-const AZ_RBAC_BASE_URL string = "https://api.azrbac.mspim.azure.com"
-
 // Base path for the Azure Resource Manager PIM API
 const ARM_BASE_PATH string = "providers/Microsoft.Authorization"
-
-// Base path for the Azure RBAC (Governance Role) API
-const AZ_RBAC_BASE_PATH = "api/v2/privilegedAccess"
 
 // Default reason for role activation
 const DEFAULT_REASON string = "config"
@@ -33,16 +27,50 @@ const DEFAULT_DURATION_MINUTES int = 480
 // API version for the "role eligibility schedule instances" (i.e. eligible azure resource role assignments)
 const AZ_PIM_API_VERSION string = "2020-10-01"
 
-// Role types
+// Role types (used as a discriminator between the group and Entra role flows)
 const (
 	ROLE_TYPE_AAD_GROUPS  = "aadGroups"
 	ROLE_TYPE_ENTRA_ROLES = "aadroles"
 )
 
-// Scope for the Azure Service Management (ASM) token (Entra Groups and Entra Roles)
+// Base URL for the Microsoft Graph API (Entra Groups and Entra Roles via PIM)
 const (
-	ASM_GLOBAL_BASE_URL = "https://management.core.windows.net"
+	GRAPH_GLOBAL_BASE_URL = "https://graph.microsoft.com"
+	GRAPH_USGOV_BASE_URL  = "https://graph.microsoft.us"
+	GRAPH_CN_BASE_URL     = "https://microsoftgraph.chinacloudapi.cn"
 )
+
+// Microsoft Graph API version
+const GRAPH_API_VERSION string = "v1.0"
+
+// Microsoft Graph PIM API paths
+const (
+	// PIM for Groups
+	GRAPH_GROUP_ELIGIBILITY_PATH = "identityGovernance/privilegedAccess/group/eligibilityScheduleInstances"
+	GRAPH_GROUP_REQUEST_PATH     = "identityGovernance/privilegedAccess/group/assignmentScheduleRequests"
+	// PIM for Entra (directory) roles
+	GRAPH_ROLE_ELIGIBILITY_PATH = "roleManagement/directory/roleEligibilityScheduleInstances"
+	GRAPH_ROLE_REQUEST_PATH     = "roleManagement/directory/roleAssignmentScheduleRequests"
+)
+
+// Microsoft Graph PIM request action and expiration type
+const (
+	GRAPH_ACTION_SELF_ACTIVATE      = "selfActivate"
+	GRAPH_EXPIRATION_AFTER_DURATION = "afterDuration"
+)
+
+// Default directory scope for Entra role activations (tenant-wide)
+const GRAPH_DEFAULT_DIRECTORY_SCOPE string = "/"
+
+// Microsoft Entra (AAD) authority hosts for the device code (public client) sign-in
+const (
+	AAD_GLOBAL_AUTHORITY_HOST = "https://login.microsoftonline.com"
+	AAD_USGOV_AUTHORITY_HOST  = "https://login.microsoftonline.us"
+	AAD_CN_AUTHORITY_HOST     = "https://login.partner.microsoftonline.cn"
+)
+
+// Tenant used in the authority URL when no tenant ID is configured
+const AAD_DEFAULT_TENANT string = "organizations"
 
 // Base URLs for different Azure environments
 var ARM_BASE_URLS = map[string]string{
@@ -51,9 +79,23 @@ var ARM_BASE_URLS = map[string]string{
 	"china":  ARM_CN_BASE_URL,
 }
 
-// Scopes for the Entra roles/groups for different Azure environments
-var ASM_SCOPES = map[string]string{
-	"global": ASM_GLOBAL_BASE_URL,
-	"usgov":  ARM_USGOV_BASE_URL,
-	"china":  ARM_CN_BASE_URL,
+// Microsoft Graph base URLs for different Azure environments (Entra groups/roles)
+var GRAPH_BASE_URLS = map[string]string{
+	"global": GRAPH_GLOBAL_BASE_URL,
+	"usgov":  GRAPH_USGOV_BASE_URL,
+	"china":  GRAPH_CN_BASE_URL,
+}
+
+// Microsoft Graph token scopes (.default) for different Azure environments
+var GRAPH_SCOPES = map[string]string{
+	"global": GRAPH_GLOBAL_BASE_URL + "/.default",
+	"usgov":  GRAPH_USGOV_BASE_URL + "/.default",
+	"china":  GRAPH_CN_BASE_URL + "/.default",
+}
+
+// Microsoft Entra authority hosts for different Azure environments
+var AAD_AUTHORITY_HOSTS = map[string]string{
+	"global": AAD_GLOBAL_AUTHORITY_HOST,
+	"usgov":  AAD_USGOV_AUTHORITY_HOST,
+	"china":  AAD_CN_AUTHORITY_HOST,
 }

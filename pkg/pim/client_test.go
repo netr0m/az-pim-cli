@@ -81,35 +81,62 @@ func TestGetEligibleResourceAssignments(t *testing.T) {
 	}
 }
 
-func (m *mockClient) GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string) *GovernanceRoleAssignmentResponse {
-	args := m.Called(roleType, subjectId, token)
-	return args.Get(0).(*GovernanceRoleAssignmentResponse)
+func (m *mockClient) GetEligibleGroupAssignments(principalId string, token string) *GraphGroupEligibilityResponse {
+	args := m.Called(principalId, token)
+	return args.Get(0).(*GraphGroupEligibilityResponse)
 }
 
-func TestGetEligibleGovernanceRoleAssignmentsAADGroup(t *testing.T) {
+func TestGetEligibleGroupAssignments(t *testing.T) {
 	m := newMockClient()
 
-	m.On("GetEligibleGovernanceRoleAssignments", ROLE_TYPE_AAD_GROUPS, TEST_DUMMY_PRINCIPAL_ID, TEST_DUMMY_JWT).Return(EligibleGovernanceRoleAssignmentsDummyData)
+	m.On("GetEligibleGroupAssignments", TEST_DUMMY_PRINCIPAL_ID, TEST_DUMMY_JWT).Return(EligibleGroupAssignmentsDummyData)
 
-	eligibleGovernanceRoleAssignments := GetEligibleGovernanceRoleAssignments(ROLE_TYPE_AAD_GROUPS, TEST_DUMMY_PRINCIPAL_ID, TEST_DUMMY_JWT, m)
+	eligibleGroupAssignments := GetEligibleGroupAssignments(TEST_DUMMY_PRINCIPAL_ID, TEST_DUMMY_JWT, m)
 
-	if len(eligibleGovernanceRoleAssignments.Value) != 3 {
-		t.Errorf("expected 3 eligible governance role assignments, got %v", len(eligibleGovernanceRoleAssignments.Value))
+	if len(eligibleGroupAssignments.Value) != 3 {
+		t.Errorf("expected 3 eligible group assignments, got %v", len(eligibleGroupAssignments.Value))
 	}
-	for _, governanceRole := range eligibleGovernanceRoleAssignments.Value {
-		if governanceRole.SubjectId != TEST_DUMMY_PRINCIPAL_ID {
-			t.Errorf("expected governance role SubjectId to be %s, got %s", TEST_DUMMY_PRINCIPAL_ID, governanceRole.SubjectId)
+	for _, groupAssignment := range eligibleGroupAssignments.Value {
+		if groupAssignment.PrincipalId != TEST_DUMMY_PRINCIPAL_ID {
+			t.Errorf("expected group assignment PrincipalId to be %s, got %s", TEST_DUMMY_PRINCIPAL_ID, groupAssignment.PrincipalId)
 		}
 	}
 	// Check group name
-	_groupName := eligibleGovernanceRoleAssignments.Value[1].RoleDefinition.Resource.DisplayName
+	_groupName := eligibleGroupAssignments.Value[1].Group.DisplayName
 	if _groupName != TEST_DUMMY_GROUP_1_NAME {
-		t.Errorf("expected governance role RoleDefinition.Resource.DisplayName to be %s, got %s", TEST_DUMMY_GROUP_1_NAME, _groupName)
+		t.Errorf("expected group assignment Group.DisplayName to be %s, got %s", TEST_DUMMY_GROUP_1_NAME, _groupName)
+	}
+	// Check access id
+	_accessId := eligibleGroupAssignments.Value[1].AccessId
+	if _accessId != "owner" {
+		t.Errorf("expected group assignment AccessId to be %s, got %s", "owner", _accessId)
+	}
+}
+
+func (m *mockClient) GetEligibleRoleAssignments(principalId string, token string) *GraphRoleEligibilityResponse {
+	args := m.Called(principalId, token)
+	return args.Get(0).(*GraphRoleEligibilityResponse)
+}
+
+func TestGetEligibleRoleAssignments(t *testing.T) {
+	m := newMockClient()
+
+	m.On("GetEligibleRoleAssignments", TEST_DUMMY_PRINCIPAL_ID, TEST_DUMMY_JWT).Return(EligibleRoleAssignmentsDummyData)
+
+	eligibleRoleAssignments := GetEligibleRoleAssignments(TEST_DUMMY_PRINCIPAL_ID, TEST_DUMMY_JWT, m)
+
+	if len(eligibleRoleAssignments.Value) != 2 {
+		t.Errorf("expected 2 eligible role assignments, got %v", len(eligibleRoleAssignments.Value))
+	}
+	for _, roleAssignment := range eligibleRoleAssignments.Value {
+		if roleAssignment.PrincipalId != TEST_DUMMY_PRINCIPAL_ID {
+			t.Errorf("expected role assignment PrincipalId to be %s, got %s", TEST_DUMMY_PRINCIPAL_ID, roleAssignment.PrincipalId)
+		}
 	}
 	// Check role name
-	_roleName := eligibleGovernanceRoleAssignments.Value[2].RoleDefinition.DisplayName
+	_roleName := eligibleRoleAssignments.Value[0].RoleDefinition.DisplayName
 	if _roleName != TEST_DUMMY_ROLE_1_NAME {
-		t.Errorf("expected governance role RoleDefinition.DisplayName to be %s, got %s", TEST_DUMMY_ROLE_1_NAME, _roleName)
+		t.Errorf("expected role assignment RoleDefinition.DisplayName to be %s, got %s", TEST_DUMMY_ROLE_1_NAME, _roleName)
 	}
 }
 
@@ -130,26 +157,6 @@ func TestValidateResourceAssignmentRequest(t *testing.T) {
 
 	if !isValid {
 		t.Errorf("expected resource assignment request validation to be successful, got %v", isValid)
-	}
-}
-
-func (m *mockClient) ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) bool {
-	args := m.Called(roleType, roleAssignmentRequest, token)
-	return args.Bool(0)
-}
-
-func TestValidateGovernanceRoleAssignmentRequest(t *testing.T) {
-	m := newMockClient()
-
-	governanceRoleAssignment := &EligibleGovernanceRoleAssignmentsDummyData.Value[0]
-	roleType, governanceRoleAssignmentRequest := CreateGovernanceRoleAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, ROLE_TYPE_AAD_GROUPS, governanceRoleAssignment, 30, "", "", "test", "Test", "1337")
-
-	m.On("ValidateGovernanceRoleAssignmentRequest", roleType, governanceRoleAssignmentRequest, TEST_DUMMY_JWT).Return(true)
-
-	isValid := ValidateGovernanceRoleAssignmentRequest(roleType, governanceRoleAssignmentRequest, TEST_DUMMY_JWT, m)
-
-	if !isValid {
-		t.Errorf("expected governance role assignment request validation to be successful, got %v", isValid)
 	}
 }
 
@@ -190,41 +197,58 @@ func TestRequestResourceAssignment(t *testing.T) {
 	assert.Equal(t, requestResponse.Properties.ScheduleInfo.Expiration.Duration, expectedDuration, "expected resource assignment request expiration duration to be %s, got %s", expectedDuration, requestResponse.Properties.Status)
 }
 
-func (m *mockClient) RequestGovernanceRoleAssignment(roleType string, governanceRoleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) *GovernanceRoleAssignmentRequestResponse {
-	args := m.Called(roleType, governanceRoleAssignmentRequest, token)
-	return args.Get(0).(*GovernanceRoleAssignmentRequestResponse)
+func (m *mockClient) RequestGroupAssignment(groupAssignmentRequest *GraphGroupAssignmentRequest, token string) *GraphAssignmentScheduleRequest {
+	args := m.Called(groupAssignmentRequest, token)
+	return args.Get(0).(*GraphAssignmentScheduleRequest)
 }
 
-func TestRequestGovernanceRoleAssignmentAADGroup(t *testing.T) {
+func TestRequestGroupAssignment(t *testing.T) {
 	m := newMockClient()
 
-	governanceRoleAssignment := &EligibleGovernanceRoleAssignmentsDummyData.Value[0]
-	roleType, governanceRoleAssignmentRequest := CreateGovernanceRoleAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, ROLE_TYPE_AAD_GROUPS, governanceRoleAssignment, DEFAULT_DURATION_MINUTES, "", "", DEFAULT_REASON, "Test", "1337")
-	governanceRoleAssignmentRequestResponse := &GovernanceRoleAssignmentRequestResponse{
-		Id:               governanceRoleAssignment.Id,
-		ResourceId:       governanceRoleAssignmentRequest.ResourceId,
-		RoleDefinitionId: governanceRoleAssignmentRequest.RoleDefinitionId,
-		SubjectId:        governanceRoleAssignment.SubjectId,
-		AssignmentState:  governanceRoleAssignmentRequest.AssignmentState,
-		Status: &GovernanceRoleAssignmentRequestStatus{
-			Status:    "Active",
-			SubStatus: "Active",
-		},
-		TicketSystem:                   "Test",
-		TicketNumber:                   "1337",
-		Reason:                         DEFAULT_REASON,
-		Schedule:                       governanceRoleAssignmentRequest.Schedule,
-		LinkedEligibleRoleAssignmentId: governanceRoleAssignmentRequest.LinkedEligibleRoleAssignmentId,
-		ScopedResourceId:               governanceRoleAssignmentRequest.ScopedResourceId,
+	groupAssignment := &EligibleGroupAssignmentsDummyData.Value[0]
+	groupAssignmentRequest := CreateGraphGroupAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, groupAssignment, DEFAULT_DURATION_MINUTES, "", "", DEFAULT_REASON, "Test", "1337")
+	groupAssignmentResponse := &GraphAssignmentScheduleRequest{
+		Id:     groupAssignment.Id,
+		Status: StatusProvisioned,
+		Action: GRAPH_ACTION_SELF_ACTIVATE,
 	}
 
-	m.On("RequestGovernanceRoleAssignment", ROLE_TYPE_AAD_GROUPS, governanceRoleAssignmentRequest, TEST_DUMMY_JWT).Return(governanceRoleAssignmentRequestResponse)
+	m.On("RequestGroupAssignment", groupAssignmentRequest, TEST_DUMMY_JWT).Return(groupAssignmentResponse)
 
-	requestResponse := RequestGovernanceRoleAssignment(roleType, governanceRoleAssignmentRequest, TEST_DUMMY_JWT, m)
+	requestResponse := RequestGroupAssignment(groupAssignmentRequest, TEST_DUMMY_JWT, m)
 	expectedDuration := fmt.Sprintf("PT%dM", DEFAULT_DURATION_MINUTES)
 
-	assert.Equal(t, requestResponse.Reason, DEFAULT_REASON, "expected governance role assignment request reason to be %s, got %s", DEFAULT_REASON, requestResponse.Reason)
-	assert.Equal(t, requestResponse.SubjectId, TEST_DUMMY_PRINCIPAL_ID, "expected governance role assignment request subject ID to be %s, got %s", TEST_DUMMY_PRINCIPAL_ID, requestResponse.SubjectId)
-	assert.Equal(t, requestResponse.Status.Status, "Active", "expected governance role assignment request status to be %s, got %s", "Active", requestResponse.Status.Status)
-	assert.Equal(t, requestResponse.Schedule.Duration, expectedDuration, "expected governance role assignment request expiration duration to be %s, got %s", expectedDuration, requestResponse.Schedule.Duration)
+	assert.Equal(t, GRAPH_ACTION_SELF_ACTIVATE, groupAssignmentRequest.Action, "expected group assignment request action to be %s, got %s", GRAPH_ACTION_SELF_ACTIVATE, groupAssignmentRequest.Action)
+	assert.Equal(t, groupAssignment.AccessId, groupAssignmentRequest.AccessId, "expected group assignment request accessId to be %s, got %s", groupAssignment.AccessId, groupAssignmentRequest.AccessId)
+	assert.Equal(t, TEST_DUMMY_PRINCIPAL_ID, groupAssignmentRequest.PrincipalId, "expected group assignment request principalId to be %s, got %s", TEST_DUMMY_PRINCIPAL_ID, groupAssignmentRequest.PrincipalId)
+	assert.Equal(t, expectedDuration, groupAssignmentRequest.ScheduleInfo.Expiration.Duration, "expected group assignment request duration to be %s, got %s", expectedDuration, groupAssignmentRequest.ScheduleInfo.Expiration.Duration)
+	assert.Equal(t, StatusProvisioned, requestResponse.Status, "expected group assignment response status to be %s, got %s", StatusProvisioned, requestResponse.Status)
+}
+
+func (m *mockClient) RequestRoleAssignment(roleAssignmentRequest *GraphRoleAssignmentRequest, token string) *GraphAssignmentScheduleRequest {
+	args := m.Called(roleAssignmentRequest, token)
+	return args.Get(0).(*GraphAssignmentScheduleRequest)
+}
+
+func TestRequestRoleAssignment(t *testing.T) {
+	m := newMockClient()
+
+	roleAssignment := &EligibleRoleAssignmentsDummyData.Value[0]
+	roleAssignmentRequest := CreateGraphRoleAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, roleAssignment, DEFAULT_DURATION_MINUTES, "", "", DEFAULT_REASON, "Test", "1337")
+	roleAssignmentResponse := &GraphAssignmentScheduleRequest{
+		Id:     roleAssignment.Id,
+		Status: StatusProvisioned,
+		Action: GRAPH_ACTION_SELF_ACTIVATE,
+	}
+
+	m.On("RequestRoleAssignment", roleAssignmentRequest, TEST_DUMMY_JWT).Return(roleAssignmentResponse)
+
+	requestResponse := RequestRoleAssignment(roleAssignmentRequest, TEST_DUMMY_JWT, m)
+	expectedDuration := fmt.Sprintf("PT%dM", DEFAULT_DURATION_MINUTES)
+
+	assert.Equal(t, GRAPH_ACTION_SELF_ACTIVATE, roleAssignmentRequest.Action, "expected role assignment request action to be %s, got %s", GRAPH_ACTION_SELF_ACTIVATE, roleAssignmentRequest.Action)
+	assert.Equal(t, GRAPH_DEFAULT_DIRECTORY_SCOPE, roleAssignmentRequest.DirectoryScopeId, "expected role assignment request directoryScopeId to be %s, got %s", GRAPH_DEFAULT_DIRECTORY_SCOPE, roleAssignmentRequest.DirectoryScopeId)
+	assert.Equal(t, roleAssignment.RoleDefinitionId, roleAssignmentRequest.RoleDefinitionId, "expected role assignment request roleDefinitionId to be %s, got %s", roleAssignment.RoleDefinitionId, roleAssignmentRequest.RoleDefinitionId)
+	assert.Equal(t, expectedDuration, roleAssignmentRequest.ScheduleInfo.Expiration.Duration, "expected role assignment request duration to be %s, got %s", expectedDuration, roleAssignmentRequest.ScheduleInfo.Expiration.Duration)
+	assert.Equal(t, StatusProvisioned, requestResponse.Status, "expected role assignment response status to be %s, got %s", StatusProvisioned, requestResponse.Status)
 }

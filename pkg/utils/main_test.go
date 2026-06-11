@@ -14,8 +14,12 @@ func TestPrintEligibleResources(t *testing.T) {
 	PrintEligibleResources(pim.EligibleResourceAssignmentsDummyData)
 }
 
-func TestPrintEligibleGovernanceRoles(t *testing.T) {
-	PrintEligibleGovernanceRoles(pim.EligibleGovernanceRoleAssignmentsDummyData)
+func TestPrintEligibleGroups(t *testing.T) {
+	PrintEligibleGroups(pim.EligibleGroupAssignmentsDummyData)
+}
+
+func TestPrintEligibleRoles(t *testing.T) {
+	PrintEligibleRoles(pim.EligibleRoleAssignmentsDummyData)
 }
 
 func TestGetResourceAssignment(t *testing.T) {
@@ -31,16 +35,29 @@ func TestGetResourceAssignment(t *testing.T) {
 	assert.EqualValues(t, subprefix, &pim.EligibleResourceAssignmentsDummyData.Value[3], "resulting resource assignment does not match expected assignment")
 }
 
-func TestGetGovernanceRoleAssignmentAADGroup(t *testing.T) {
-	var grp1role1 = GetGovernanceRoleAssignment(pim.TEST_DUMMY_GROUP_1_NAME, "", pim.TEST_DUMMY_ROLE_1_NAME, pim.EligibleGovernanceRoleAssignmentsDummyData)
-	assert.EqualValues(t, grp1role1, &pim.EligibleGovernanceRoleAssignmentsDummyData.Value[0], "resulting governance role assignment does not match expected assignment")
-	var grp1role2 = GetGovernanceRoleAssignment(pim.TEST_DUMMY_GROUP_1_NAME, "", pim.TEST_DUMMY_ROLE_2_NAME, pim.EligibleGovernanceRoleAssignmentsDummyData)
-	assert.EqualValues(t, grp1role2, &pim.EligibleGovernanceRoleAssignmentsDummyData.Value[1], "resulting governance role assignment does not match expected assignment")
-	assert.Equal(t, grp1role2.RoleDefinition.DisplayName, pim.TEST_DUMMY_ROLE_2_NAME, "resulting governance role assignment role name does not match expected name")
-	var grp2role1 = GetGovernanceRoleAssignment(pim.TEST_DUMMY_GROUP_2_NAME, "", pim.TEST_DUMMY_ROLE_1_NAME, pim.EligibleGovernanceRoleAssignmentsDummyData)
-	assert.EqualValues(t, grp2role1, &pim.EligibleGovernanceRoleAssignmentsDummyData.Value[2], "resulting governance role assignment does not match expected assignment")
-	assert.Equal(t, grp2role1.RoleDefinition.Resource.DisplayName, pim.TEST_DUMMY_GROUP_2_NAME, "resulting governance role assignment resource name does not match expected name")
+func TestGetEligibleGroupAssignment(t *testing.T) {
+	// Group 1 has both a 'member' (Value[0]) and an 'owner' (Value[1]) eligibility
+	var grp1member = GetEligibleGroupAssignment(pim.TEST_DUMMY_GROUP_1_NAME, "", "member", pim.EligibleGroupAssignmentsDummyData)
+	assert.EqualValues(t, grp1member, &pim.EligibleGroupAssignmentsDummyData.Value[0], "resulting group assignment does not match expected assignment")
+	var grp1owner = GetEligibleGroupAssignment(pim.TEST_DUMMY_GROUP_1_NAME, "", "owner", pim.EligibleGroupAssignmentsDummyData)
+	assert.EqualValues(t, grp1owner, &pim.EligibleGroupAssignmentsDummyData.Value[1], "resulting group assignment does not match expected assignment")
+	assert.Equal(t, grp1owner.AccessId, "owner", "resulting group assignment accessId does not match expected value")
+	// Group 2 has a single 'member' eligibility; no role filter required
+	var grp2 = GetEligibleGroupAssignment(pim.TEST_DUMMY_GROUP_2_NAME, "", "", pim.EligibleGroupAssignmentsDummyData)
+	assert.EqualValues(t, grp2, &pim.EligibleGroupAssignmentsDummyData.Value[2], "resulting group assignment does not match expected assignment")
+	assert.Equal(t, grp2.Group.DisplayName, pim.TEST_DUMMY_GROUP_2_NAME, "resulting group assignment group name does not match expected name")
 
-	var grpprefix = GetGovernanceRoleAssignment("", "group", "", pim.EligibleGovernanceRoleAssignmentsDummyData)
-	assert.EqualValues(t, grpprefix, &pim.EligibleGovernanceRoleAssignmentsDummyData.Value[0], "resulting governance role assignment does not match expected assignment")
+	var grpprefix = GetEligibleGroupAssignment("", "group", "", pim.EligibleGroupAssignmentsDummyData)
+	assert.EqualValues(t, grpprefix, &pim.EligibleGroupAssignmentsDummyData.Value[0], "resulting group assignment does not match expected assignment")
+}
+
+func TestGetEligibleRoleAssignment(t *testing.T) {
+	var role1 = GetEligibleRoleAssignment(pim.TEST_DUMMY_ROLE_1_NAME, "", "", pim.EligibleRoleAssignmentsDummyData)
+	assert.EqualValues(t, role1, &pim.EligibleRoleAssignmentsDummyData.Value[0], "resulting role assignment does not match expected assignment")
+	var role2 = GetEligibleRoleAssignment(pim.TEST_DUMMY_ROLE_2_NAME, "", pim.TEST_DUMMY_ROLE_2_NAME, pim.EligibleRoleAssignmentsDummyData)
+	assert.EqualValues(t, role2, &pim.EligibleRoleAssignmentsDummyData.Value[1], "resulting role assignment does not match expected assignment")
+	assert.Equal(t, role2.RoleDefinition.DisplayName, pim.TEST_DUMMY_ROLE_2_NAME, "resulting role assignment role name does not match expected name")
+
+	var roleprefix = GetEligibleRoleAssignment("", "role 1", "", pim.EligibleRoleAssignmentsDummyData)
+	assert.EqualValues(t, roleprefix, &pim.EligibleRoleAssignmentsDummyData.Value[0], "resulting role assignment does not match expected assignment")
 }

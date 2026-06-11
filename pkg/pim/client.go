@@ -25,21 +25,35 @@ import (
 type Client interface {
 	GetAccessToken(scope string) string
 	GetEligibleResourceAssignments(token string) *ResourceAssignmentResponse
-	GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string) *GovernanceRoleAssignmentResponse
 	ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) bool
-	ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) bool
 	RequestResourceAssignment(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) *ResourceAssignmentRequestResponse
-	RequestGovernanceRoleAssignment(roleType string, governanceRoleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) *GovernanceRoleAssignmentRequestResponse
+	GetEligibleGroupAssignments(principalId string, token string) *GraphGroupEligibilityResponse
+	GetEligibleRoleAssignments(principalId string, token string) *GraphRoleEligibilityResponse
+	RequestGroupAssignment(groupAssignmentRequest *GraphGroupAssignmentRequest, token string) *GraphAssignmentScheduleRequest
+	RequestRoleAssignment(roleAssignmentRequest *GraphRoleAssignmentRequest, token string) *GraphAssignmentScheduleRequest
 }
 
 // Azure Client implementation
 type AzureClient struct {
-	ARMBaseURL string
-	ASMScope   string
+	ARMBaseURL    string // Azure Resource Manager base URL (Azure resources)
+	GraphBaseURL  string // Microsoft Graph base URL (Entra groups and roles)
+	GraphScope    string // Microsoft Graph token scope (.default)
+	Authority     string // Microsoft Entra authority URL (host + tenant) for sign-in
+	ClientID      string // app registration client ID used for Graph access
+	TenantID      string // Microsoft Entra tenant ID
+	UseDeviceCode bool   // use the device code flow instead of the interactive browser flow
 }
 
 // Implementation of the GetAccessToken call
 func (c AzureClient) GetAccessToken(scope string) string {
+	// Microsoft Graph (Entra groups and roles) is accessed through a custom app
+	// registration via an interactive sign-in, since the Azure CLI's built-in
+	// client is not authorized for the Graph PIM delegated permissions.
+	if c.GraphScope != "" && scope == c.GraphScope {
+		return c.getGraphToken(scope)
+	}
+
+	// Azure resources (ARM) continue to use the Azure CLI credential
 	cred, err := azidentity.NewAzureCLICredential(nil)
 	if err != nil {
 		_error := common.Error{
@@ -128,6 +142,11 @@ func Request(request *PIMRequest, responseModel any) any {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", request.Token))
+	for key, values := range request.Headers {
+		for _, value := range values {
+			req.Header.Add(key, value)
+		}
+	}
 
 	// Prepare request parameters
 	query := req.URL.Query()
@@ -218,22 +237,14 @@ func GetEligibleResourceAssignments(token string, c Client) *ResourceAssignmentR
 	return c.GetEligibleResourceAssignments(token)
 }
 
-func (c AzureClient) GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string) *GovernanceRoleAssignmentResponse {
-	if !IsGovernanceRoleType(roleType) {
-		_error := common.Error{
-			Operation: "GetEligibleGovernanceRoleAssignments",
-			Message:   "Invalid role type specified.",
-		}
-		slog.Error(_error.Error())
-		os.Exit(1)
-	}
+func (c AzureClient) GetEligibleGroupAssignments(principalId string, token string) *GraphGroupEligibilityResponse {
 	params := map[string]string{
-		"$expand": "linkedEligibleRoleAssignment,subject,scopedResource,roleDefinition($expand=resource)",
-		"$filter": fmt.Sprintf("(subject/id eq '%s') and (assignmentState eq 'Eligible')", subjectId),
+		"$filter": fmt.Sprintf("principalId eq '%s'", principalId),
+		"$expand": "group",
 	}
-	responseModel := &GovernanceRoleAssignmentResponse{}
+	responseModel := &GraphGroupEligibilityResponse{}
 	_ = Request(&PIMRequest{
-		Url:    fmt.Sprintf("%s/%s/%s/roleAssignments", AZ_RBAC_BASE_URL, AZ_RBAC_BASE_PATH, roleType),
+		Url:    fmt.Sprintf("%s/%s/%s", c.GraphBaseURL, GRAPH_API_VERSION, GRAPH_GROUP_ELIGIBILITY_PATH),
 		Token:  token,
 		Method: "GET",
 		Params: params,
@@ -242,8 +253,28 @@ func (c AzureClient) GetEligibleGovernanceRoleAssignments(roleType string, subje
 	return responseModel
 }
 
-func GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string, c Client) *GovernanceRoleAssignmentResponse {
-	return c.GetEligibleGovernanceRoleAssignments(roleType, subjectId, token)
+func GetEligibleGroupAssignments(principalId string, token string, c Client) *GraphGroupEligibilityResponse {
+	return c.GetEligibleGroupAssignments(principalId, token)
+}
+
+func (c AzureClient) GetEligibleRoleAssignments(principalId string, token string) *GraphRoleEligibilityResponse {
+	params := map[string]string{
+		"$filter": fmt.Sprintf("principalId eq '%s'", principalId),
+		"$expand": "roleDefinition",
+	}
+	responseModel := &GraphRoleEligibilityResponse{}
+	_ = Request(&PIMRequest{
+		Url:    fmt.Sprintf("%s/%s/%s", c.GraphBaseURL, GRAPH_API_VERSION, GRAPH_ROLE_ELIGIBILITY_PATH),
+		Token:  token,
+		Method: "GET",
+		Params: params,
+	}, responseModel)
+
+	return responseModel
+}
+
+func GetEligibleRoleAssignments(principalId string, token string, c Client) *GraphRoleEligibilityResponse {
+	return c.GetEligibleRoleAssignments(principalId, token)
 }
 
 func (c AzureClient) ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) bool {
@@ -281,29 +312,6 @@ func ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest *
 	return c.ValidateResourceAssignmentRequest(scope, resourceAssignmentRequest, token)
 }
 
-func (c AzureClient) ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) bool {
-	params := map[string]string{
-		"evaluateOnly": "true",
-	}
-
-	governanceRoleAssignmentValidationRequest := roleAssignmentRequest
-
-	validationResponse := &GovernanceRoleAssignmentRequestResponse{}
-	_ = Request(&PIMRequest{
-		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_RBAC_BASE_URL, AZ_RBAC_BASE_PATH, roleType),
-		Token:   token,
-		Method:  "POST",
-		Params:  params,
-		Payload: governanceRoleAssignmentValidationRequest,
-	}, validationResponse)
-
-	return validationResponse.CheckGovernanceRoleAssignmentResult(governanceRoleAssignmentValidationRequest)
-}
-
-func ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest *GovernanceRoleAssignmentRequest, token string, c Client) bool {
-	return c.ValidateGovernanceRoleAssignmentRequest(roleType, roleAssignmentRequest, token)
-}
-
 func (c AzureClient) RequestResourceAssignment(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) *ResourceAssignmentRequestResponse {
 	u, err := url.JoinPath(c.ARMBaseURL, scope, ARM_BASE_PATH, "roleAssignmentScheduleRequests", uuid.NewString())
 	if err != nil {
@@ -338,20 +346,38 @@ func RequestResourceAssignment(scope string, resourceAssignmentRequest *Resource
 	return c.RequestResourceAssignment(scope, resourceAssignmentRequest, token)
 }
 
-func (c AzureClient) RequestGovernanceRoleAssignment(roleType string, governanceRoleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) *GovernanceRoleAssignmentRequestResponse {
-	responseModel := &GovernanceRoleAssignmentRequestResponse{}
+func (c AzureClient) RequestGroupAssignment(groupAssignmentRequest *GraphGroupAssignmentRequest, token string) *GraphAssignmentScheduleRequest {
+	responseModel := &GraphAssignmentScheduleRequest{}
 	_ = Request(&PIMRequest{
-		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_RBAC_BASE_URL, AZ_RBAC_BASE_PATH, roleType),
+		Url:     fmt.Sprintf("%s/%s/%s", c.GraphBaseURL, GRAPH_API_VERSION, GRAPH_GROUP_REQUEST_PATH),
 		Token:   token,
 		Method:  "POST",
-		Payload: governanceRoleAssignmentRequest,
+		Payload: groupAssignmentRequest,
 	}, responseModel)
 
-	responseModel.CheckGovernanceRoleAssignmentResult(governanceRoleAssignmentRequest)
+	responseModel.CheckGraphRequestResult()
 
 	return responseModel
 }
 
-func RequestGovernanceRoleAssignment(roleType string, governanceRoleAssignmentRequest *GovernanceRoleAssignmentRequest, token string, c Client) *GovernanceRoleAssignmentRequestResponse {
-	return c.RequestGovernanceRoleAssignment(roleType, governanceRoleAssignmentRequest, token)
+func RequestGroupAssignment(groupAssignmentRequest *GraphGroupAssignmentRequest, token string, c Client) *GraphAssignmentScheduleRequest {
+	return c.RequestGroupAssignment(groupAssignmentRequest, token)
+}
+
+func (c AzureClient) RequestRoleAssignment(roleAssignmentRequest *GraphRoleAssignmentRequest, token string) *GraphAssignmentScheduleRequest {
+	responseModel := &GraphAssignmentScheduleRequest{}
+	_ = Request(&PIMRequest{
+		Url:     fmt.Sprintf("%s/%s/%s", c.GraphBaseURL, GRAPH_API_VERSION, GRAPH_ROLE_REQUEST_PATH),
+		Token:   token,
+		Method:  "POST",
+		Payload: roleAssignmentRequest,
+	}, responseModel)
+
+	responseModel.CheckGraphRequestResult()
+
+	return responseModel
+}
+
+func RequestRoleAssignment(roleAssignmentRequest *GraphRoleAssignmentRequest, token string, c Client) *GraphAssignmentScheduleRequest {
+	return c.RequestRoleAssignment(roleAssignmentRequest, token)
 }

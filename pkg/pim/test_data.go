@@ -144,66 +144,68 @@ var EligibleResourceAssignmentsDummyData *ResourceAssignmentResponse = &Resource
 	},
 }
 
-var governanceRoleAssignmentSubject *GovernanceRoleAssignmentSubject = &GovernanceRoleAssignmentSubject{
-	Id:            TEST_DUMMY_PRINCIPAL_ID,
-	DisplayName:   TEST_DUMMY_PRINCIPAL_NAME,
-	PrincipalName: TEST_DUMMY_PRINCIPAL_NAME,
-	Email:         TEST_DUMMY_PRINCIPAL_EMAIL,
-	Type:          "user",
+// Dummy Entra role data
+const (
+	TEST_DUMMY_ROLE_1_DEFINITION_ID = "729827e3-9c14-49f7-bb1b-9608f156bbb8"
+	TEST_DUMMY_ROLE_2_DEFINITION_ID = "fe930be7-5e62-47db-91af-98c3a49a38b1"
+)
+
+var EligibleGroupAssignmentsDummyData *GraphGroupEligibilityResponse = &GraphGroupEligibilityResponse{
+	Value: []GraphGroupEligibilityInstance{
+		{
+			Id:          "38622a10-cc6c-48cf-a516-9ebbffcc5aae",
+			PrincipalId: TEST_DUMMY_PRINCIPAL_ID,
+			GroupId:     TEST_DUMMY_GROUP_1_ID,
+			AccessId:    "member",
+			Group: &GraphGroup{
+				Id:          TEST_DUMMY_GROUP_1_ID,
+				DisplayName: TEST_DUMMY_GROUP_1_NAME,
+			},
+		},
+		{
+			Id:          "2f6203dd-ddc5-49c3-9b1f-fa6b9f6e1d4d",
+			PrincipalId: TEST_DUMMY_PRINCIPAL_ID,
+			GroupId:     TEST_DUMMY_GROUP_1_ID,
+			AccessId:    "owner",
+			Group: &GraphGroup{
+				Id:          TEST_DUMMY_GROUP_1_ID,
+				DisplayName: TEST_DUMMY_GROUP_1_NAME,
+			},
+		},
+		{
+			Id:          "533faa7b-5a9c-483f-b854-c01e380b4ae7",
+			PrincipalId: TEST_DUMMY_PRINCIPAL_ID,
+			GroupId:     TEST_DUMMY_GROUP_2_ID,
+			AccessId:    "member",
+			Group: &GraphGroup{
+				Id:          TEST_DUMMY_GROUP_2_ID,
+				DisplayName: TEST_DUMMY_GROUP_2_NAME,
+			},
+		},
+	},
 }
 
-var EligibleGovernanceRoleAssignmentsDummyData *GovernanceRoleAssignmentResponse = &GovernanceRoleAssignmentResponse{
-	Value: []GovernanceRoleAssignment{
+var EligibleRoleAssignmentsDummyData *GraphRoleEligibilityResponse = &GraphRoleEligibilityResponse{
+	Value: []GraphRoleEligibilityInstance{
 		{
-			Id:               "38622a10-cc6c-48cf-a516-9ebbffcc5aae",
-			ResourceId:       TEST_DUMMY_GROUP_1_ID,
-			RoleDefinitionId: TEST_DUMMY_GRP_1_ROLE_1_ID,
-			SubjectId:        TEST_DUMMY_PRINCIPAL_ID,
-			RoleDefinition: &GovernanceRoleDefinition{
-				Id:          TEST_DUMMY_GRP_1_ROLE_1_ID,
-				Type:        "role",
+			Id:               "a3f9b3b1-2b6c-4d7e-8f1a-1c2d3e4f5a6b",
+			PrincipalId:      TEST_DUMMY_PRINCIPAL_ID,
+			RoleDefinitionId: TEST_DUMMY_ROLE_1_DEFINITION_ID,
+			DirectoryScopeId: "/",
+			RoleDefinition: &GraphRoleDefinition{
+				Id:          TEST_DUMMY_ROLE_1_DEFINITION_ID,
 				DisplayName: TEST_DUMMY_ROLE_1_NAME,
-				Resource: &GovernanceRoleResource{
-					Id:          TEST_DUMMY_GROUP_1_ID,
-					Type:        "group",
-					DisplayName: TEST_DUMMY_GROUP_1_NAME,
-				},
 			},
-			Subject: governanceRoleAssignmentSubject,
 		},
 		{
-			Id:               "2f6203dd-ddc5-49c3-9b1f-fa6b9f6e1d4d",
-			ResourceId:       TEST_DUMMY_GROUP_1_ID,
-			RoleDefinitionId: TEST_DUMMY_GRP_1_ROLE_2_ID,
-			SubjectId:        TEST_DUMMY_PRINCIPAL_ID,
-			RoleDefinition: &GovernanceRoleDefinition{
-				Id:          TEST_DUMMY_GRP_1_ROLE_2_ID,
-				Type:        "role",
+			Id:               "b4a0c4c2-3c7d-4e8f-9a2b-2d3e4f5a6b7c",
+			PrincipalId:      TEST_DUMMY_PRINCIPAL_ID,
+			RoleDefinitionId: TEST_DUMMY_ROLE_2_DEFINITION_ID,
+			DirectoryScopeId: "/",
+			RoleDefinition: &GraphRoleDefinition{
+				Id:          TEST_DUMMY_ROLE_2_DEFINITION_ID,
 				DisplayName: TEST_DUMMY_ROLE_2_NAME,
-				Resource: &GovernanceRoleResource{
-					Id:          TEST_DUMMY_GROUP_1_ID,
-					Type:        "group",
-					DisplayName: TEST_DUMMY_GROUP_1_NAME,
-				},
 			},
-			Subject: governanceRoleAssignmentSubject,
-		},
-		{
-			Id:               "533faa7b-5a9c-483f-b854-c01e380b4ae7",
-			ResourceId:       TEST_DUMMY_GROUP_2_ID,
-			RoleDefinitionId: TEST_DUMMY_GRP_2_ROLE_1_ID,
-			SubjectId:        TEST_DUMMY_PRINCIPAL_ID,
-			RoleDefinition: &GovernanceRoleDefinition{
-				Id:          TEST_DUMMY_GRP_2_ROLE_1_ID,
-				Type:        "role",
-				DisplayName: TEST_DUMMY_ROLE_1_NAME,
-				Resource: &GovernanceRoleResource{
-					Id:          TEST_DUMMY_GROUP_2_ID,
-					Type:        "group",
-					DisplayName: TEST_DUMMY_GROUP_2_NAME,
-				},
-			},
-			Subject: governanceRoleAssignmentSubject,
 		},
 	},
 }

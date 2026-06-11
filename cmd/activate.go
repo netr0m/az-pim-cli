@@ -79,50 +79,91 @@ var activateResourceCmd = &cobra.Command{
 	},
 }
 
+func startDateTimeDisplay(scheduleInfo *pim.GraphScheduleInfo) string {
+	if scheduleInfo != nil && scheduleInfo.StartDateTime != nil {
+		return *scheduleInfo.StartDateTime
+	}
+	return "immediate"
+}
+
 func activateGovernanceRole(roleType string) {
 	if !pim.IsGovernanceRoleType(roleType) {
 		slog.Error("Invalid role type specified.")
 		os.Exit(1)
 	}
-	token := pim.GetAccessToken(AzureClientInstance.ASMScope, AzureClientInstance)
-	subjectId := pim.GetUserInfo(token).ObjectId
-
-	eligibleAssignments := pim.GetEligibleGovernanceRoleAssignments(roleType, subjectId, token, AzureClientInstance)
-	roleAssignment := utils.GetGovernanceRoleAssignment(name, prefix, roleName, eligibleAssignments)
-	roleType, assignmentRequest := pim.CreateGovernanceRoleAssignmentRequest(subjectId, roleType, roleAssignment, duration, startDate, startTime, reason, ticketSystem, ticketNumber)
-
-	slog.Info(
-		"Requesting activation",
-		"role", roleAssignment.RoleDefinition.DisplayName,
-		"scope", roleAssignment.RoleDefinition.Resource.DisplayName,
-		"reason", reason,
-		"ticketNumber", ticketNumber,
-		"ticketSystem", ticketSystem,
-		"duration", duration,
-		"startDateTime", assignmentRequest.Schedule.StartDateTime,
-		"cloud", azureEnv,
-	)
-
-	if dryRun {
-		slog.Warn("Skipping activation due to '--dry-run'")
-		os.Exit(0)
-	}
+	requireGraphClient()
 	if validateOnly {
-		slog.Warn("Running validation only")
-		validationSuccessful := pim.ValidateGovernanceRoleAssignmentRequest(roleType, assignmentRequest, token, AzureClientInstance)
-		if validationSuccessful {
-			os.Exit(0)
-		}
+		slog.Error("'--validate-only' is not supported for group/role activation via Microsoft Graph; use '--dry-run' to preview instead")
 		os.Exit(1)
 	}
-	requestResponse := pim.RequestGovernanceRoleAssignment(roleType, assignmentRequest, token, AzureClientInstance)
-	slog.Info(
-		"Request completed",
-		"role", roleAssignment.RoleDefinition.DisplayName,
-		"scope", roleAssignment.RoleDefinition.Resource.DisplayName,
-		"status", requestResponse.AssignmentState,
-	)
 
+	token := pim.GetAccessToken(AzureClientInstance.GraphScope, AzureClientInstance)
+	principalId := pim.GetUserInfo(token).ObjectId
+
+	switch roleType {
+	case pim.ROLE_TYPE_AAD_GROUPS:
+		eligibleAssignments := pim.GetEligibleGroupAssignments(principalId, token, AzureClientInstance)
+		groupAssignment := utils.GetEligibleGroupAssignment(name, prefix, roleName, eligibleAssignments)
+		assignmentRequest := pim.CreateGraphGroupAssignmentRequest(principalId, groupAssignment, duration, startDate, startTime, reason, ticketSystem, ticketNumber)
+
+		groupName := groupAssignment.GroupId
+		if groupAssignment.Group != nil {
+			groupName = groupAssignment.Group.DisplayName
+		}
+		slog.Info(
+			"Requesting activation",
+			"group", groupName,
+			"accessId", groupAssignment.AccessId,
+			"reason", reason,
+			"ticketNumber", ticketNumber,
+			"ticketSystem", ticketSystem,
+			"duration", duration,
+			"startDateTime", startDateTimeDisplay(assignmentRequest.ScheduleInfo),
+			"cloud", azureEnv,
+		)
+
+		if dryRun {
+			slog.Warn("Skipping activation due to '--dry-run'")
+			os.Exit(0)
+		}
+		requestResponse := pim.RequestGroupAssignment(assignmentRequest, token, AzureClientInstance)
+		slog.Info(
+			"Request completed",
+			"group", groupName,
+			"accessId", groupAssignment.AccessId,
+			"status", requestResponse.Status,
+		)
+	case pim.ROLE_TYPE_ENTRA_ROLES:
+		eligibleAssignments := pim.GetEligibleRoleAssignments(principalId, token, AzureClientInstance)
+		roleAssignment := utils.GetEligibleRoleAssignment(name, prefix, roleName, eligibleAssignments)
+		assignmentRequest := pim.CreateGraphRoleAssignmentRequest(principalId, roleAssignment, duration, startDate, startTime, reason, ticketSystem, ticketNumber)
+
+		displayName := roleAssignment.RoleDefinitionId
+		if roleAssignment.RoleDefinition != nil {
+			displayName = roleAssignment.RoleDefinition.DisplayName
+		}
+		slog.Info(
+			"Requesting activation",
+			"role", displayName,
+			"reason", reason,
+			"ticketNumber", ticketNumber,
+			"ticketSystem", ticketSystem,
+			"duration", duration,
+			"startDateTime", startDateTimeDisplay(assignmentRequest.ScheduleInfo),
+			"cloud", azureEnv,
+		)
+
+		if dryRun {
+			slog.Warn("Skipping activation due to '--dry-run'")
+			os.Exit(0)
+		}
+		requestResponse := pim.RequestRoleAssignment(assignmentRequest, token, AzureClientInstance)
+		slog.Info(
+			"Request completed",
+			"role", displayName,
+			"status", requestResponse.Status,
+		)
+	}
 }
 
 var activateGroupCmd = &cobra.Command{

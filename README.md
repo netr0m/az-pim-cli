@@ -30,7 +30,28 @@ In addition to supporting environment variables and command line arguments, the 
 See [Configuration options](#configuration-options) for more details
 
 ### Prerequisites
-This tool depends on [`az-cli`](https://learn.microsoft.com/en-us/cli/azure/) for authentication. Please ensure that you've authenticated with your Azure tenant by running the command `az login`. A new browser window will open, asking you to authenticate. This should only be necessary to do once.
+
+#### Azure resources
+Activating **Azure resource** roles depends on [`az-cli`](https://learn.microsoft.com/en-us/cli/azure/) for authentication. Please ensure that you've authenticated with your Azure tenant by running the command `az login`. A new browser window will open, asking you to authenticate. This should only be necessary to do once.
+
+#### Groups and Entra roles (app registration)
+Activating **groups** and **Entra roles** uses the Microsoft Graph PIM APIs, which the Azure CLI's built-in client is not authorized to access. You therefore need to register your own [Microsoft Entra application](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app) and supply its client/tenant ID via `--client-id`/`--tenant-id` (or `PIM_CLIENTID`/`PIM_TENANTID`, or `clientid`/`tenantid` in the config file).
+
+Set up the app registration once:
+
+1. **App registrations → New registration.** Single-tenant.
+2. **Authentication → Add a platform → Mobile and desktop applications**, and add the redirect URI `http://localhost` (used by the interactive loopback sign-in; any local port is allowed). Also set **Allow public client flows → Yes**.
+3. **API permissions → Add a permission → Microsoft Graph → Delegated permissions**, then add:
+   - For groups: `PrivilegedAccess.ReadWrite.AzureADGroup`
+   - For Entra roles: `RoleEligibilitySchedule.Read.Directory` and `RoleAssignmentSchedule.ReadWrite.Directory`
+4. **Grant admin consent** for the permissions above. Granting admin consent for these *delegated* permissions requires a role such as *Cloud Application Administrator*, *Application Administrator*, *Privileged Role Administrator* or *Global Administrator*.
+5. Note the **Application (client) ID** and **Directory (tenant) ID**.
+
+On first use of a group/role command, your default browser opens for an interactive sign-in (authorization code + PKCE). The token (including the refresh token) is cached at `$HOME/.az-pim-cli.cache.json` (mode `0600`) so subsequent commands reuse it silently until it expires.
+
+> :information_source: The interactive sign-in honors the `BROWSER` environment variable (same convention as Python's `webbrowser`): a `os.pathsep`-separated list of commands, where `%s` is replaced with the URL (or the URL is appended if there's no `%s`). If `BROWSER` is unset, the platform default browser is used.
+
+> :information_source: For headless environments (e.g. SSH) where no browser is available, pass `--device-code` to use the device code flow instead. Note that some tenants block the device code flow via Conditional Access — in that case the interactive browser flow is required.
 
 ## Usage
 
@@ -50,10 +71,13 @@ Available Commands:
   version     Display the version of az-pim-cli
 
 Flags:
-      --cloud string    Which Azure environment to use ('global', 'usgov', 'china') (default "global")
-  -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
-      --debug           Enable debug logging
-  -h, --help            help for az-pim-cli
+      --client-id string    Client ID of the app registration used for PIM group/role activation via Microsoft Graph (or set PIM_CLIENTID / 'clientid' in config)
+      --cloud string        Which Azure environment to use ('global', 'usgov', 'china') (default "global")
+  -c, --config string       config file (default is $HOME/.az-pim-cli.yaml)
+      --debug               Enable debug logging
+      --device-code         Use the device code sign-in flow instead of the interactive browser flow (for headless environments; may be blocked by Conditional Access)
+  -h, --help                help for az-pim-cli
+      --tenant-id string    Microsoft Entra tenant ID for the app registration (or set PIM_TENANTID / 'tenantid' in config)
 
 Use "az-pim-cli [command] --help" for more information about a command.
 
@@ -184,13 +208,14 @@ $ az-pim-cli activate group
 <summary>Example</summary>
 
 > :information_source: See examples under [Activate - Azure resources](#azure-resources-1) for additional parameters.
+> :information_source: For groups, `--role` selects the access type (`member` or `owner`). `--validate-only` is not supported for groups/roles (no Microsoft Graph equivalent); use `--dry-run` to preview instead.
 
 ```bash
-# Activate the first matching role for the group 'my-entra-id-group'
+# Activate the first matching membership for the group 'my-entra-id-group'
 $ az-pim-cli activate group --name my-entra-id-group --duration 5
-time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=my-entra-id-group reason="" ticketNumber="" ticketSystem="" duration=5 startDateTime=""
-time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned subStatus=""
-time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=my-entra-id-group status=Active
+time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" group=my-entra-id-group accessId=member reason="" ticketNumber="" ticketSystem="" duration=5 startDateTime=immediate
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" group=my-entra-id-group accessId=member status=Provisioned
 ```
 
 </details>
@@ -205,13 +230,14 @@ $ az-pim-cli activate role
 <summary>Example</summary>
 
 > :information_source: See examples under [Activate - Azure resources](#azure-resources-1) for additional parameters.
+> :information_source: `--validate-only` is not supported for groups/roles (no Microsoft Graph equivalent); use `--dry-run` to preview instead.
 
 ```bash
 # Activate the first matching role for the Entra role 'my-entra-id-role'
 $ az-pim-cli activate role --name my-entra-id-role --duration 5
-time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=my-entra-id-role reason="" ticketNumber="" ticketSystem="" duration=5 startDateTime=""
-time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned subStatus=""
-time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=my-entra-id-role status=Active
+time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=my-entra-id-role reason="" ticketNumber="" ticketSystem="" duration=5 startDateTime=immediate
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned
+time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=my-entra-id-role status=Provisioned
 ```
 
 </details>
@@ -229,6 +255,8 @@ ticketSystem: System
 ticketNumber: T-1337
 duration: 5
 cloud: global
+clientid: 00000000-0000-0000-0000-000000000000
+tenantid: 11111111-1111-1111-1111-111111111111
 ```
 
 #### Environment variables
@@ -237,6 +265,8 @@ You may also define these configuration options as environment variables by pref
 ```bash
 export PIM_DURATION=30
 export PIM_CLOUD=global
+export PIM_CLIENTID=00000000-0000-0000-0000-000000000000
+export PIM_TENANTID=11111111-1111-1111-1111-111111111111
 ```
 
 ### Troubleshooting

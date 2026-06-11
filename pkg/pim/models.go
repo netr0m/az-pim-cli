@@ -64,44 +64,6 @@ type ResourceAssignmentResponse struct {
 	Value []ResourceAssignment `json:"value"`
 }
 
-type GovernanceRoleAssignmentSubject struct {
-	Id            string `json:"id"`
-	Type          string `json:"type"`
-	DisplayName   string `json:"displayName"`
-	PrincipalName string `json:"principalName"`
-	Email         string `json:"email"`
-}
-
-type GovernanceRoleResource struct {
-	Id          string `json:"id"`
-	Type        string `json:"type"`
-	DisplayName string `json:"displayName"`
-	Status      string `json:"status"`
-}
-
-type GovernanceRoleDefinition struct {
-	Id          string                  `json:"id"`
-	ResourceId  string                  `json:"resourceId"`
-	Type        string                  `json:"type"`
-	DisplayName string                  `json:"displayName"`
-	Resource    *GovernanceRoleResource `json:"resource"`
-}
-
-type GovernanceRoleAssignment struct {
-	Id               string                           `json:"id"`
-	ResourceId       string                           `json:"resourceId"`
-	RoleDefinitionId string                           `json:"roleDefinitionId"`
-	SubjectId        string                           `json:"subjectId"`
-	AssignmentState  string                           `json:"assignmentState"`
-	Status           string                           `json:"status"`
-	Subject          *GovernanceRoleAssignmentSubject `json:"subject"`
-	RoleDefinition   *GovernanceRoleDefinition        `json:"roleDefinition"`
-}
-
-type GovernanceRoleAssignmentResponse struct {
-	Value []GovernanceRoleAssignment `json:"value"`
-}
-
 type TicketInfo struct {
 	TicketNumber string `json:"ticketNumber"`
 	TicketSystem string `json:"ticketSystem"`
@@ -183,52 +145,93 @@ type ResourceAssignmentRequestRequest struct {
 	Properties ResourceAssignmentRequestProperties `json:"Properties"`
 }
 
-type GovernanceRoleAssignmentSchedule struct {
-	Type          string      `json:"type"`
-	StartDateTime interface{} `json:"startDateTime"`
-	EndDateTime   interface{} `json:"endDateTime"`
-	Duration      string      `json:"duration"`
+// == Microsoft Graph PIM models (Entra groups and roles) ==
+
+// GraphScheduleInfoExpiration describes how an activation expires.
+type GraphScheduleInfoExpiration struct {
+	Type     string `json:"type"`     // e.g. "afterDuration"
+	Duration string `json:"duration"` // ISO-8601 duration, e.g. "PT480M"
 }
 
-type GovernanceRoleAssignmentRequest struct {
-	RoleDefinitionId               string                            `json:"roleDefinitionId"`
-	ResourceId                     string                            `json:"resourceId"`
-	SubjectId                      string                            `json:"subjectId"`
-	AssignmentState                string                            `json:"assignmentState"`
-	Type                           string                            `json:"type"`
-	Reason                         string                            `json:"reason"`
-	TicketNumber                   string                            `json:"ticketNumber"`
-	TicketSystem                   string                            `json:"ticketSystem"`
-	Schedule                       *GovernanceRoleAssignmentSchedule `json:"schedule"`
-	LinkedEligibleRoleAssignmentId string                            `json:"linkedEligibleRoleAssignmentId"`
-	ScopedResourceId               string                            `json:"scopedResourceId"`
+// GraphScheduleInfo describes when an activation starts and how long it lasts.
+// StartDateTime is omitted when not explicitly requested, letting Graph default
+// to the time the request is processed.
+type GraphScheduleInfo struct {
+	StartDateTime *string                      `json:"startDateTime,omitempty"`
+	Expiration    *GraphScheduleInfoExpiration `json:"expiration"`
 }
 
-type GovernanceRoleAssignmentRequestStatus struct {
-	Status        string              `json:"status"`
-	SubStatus     string              `json:"subStatus"`
-	StatusDetails []map[string]string `json:"statusDetails"`
+// GraphTicketInfo carries optional ticketing metadata for an activation.
+type GraphTicketInfo struct {
+	TicketNumber string `json:"ticketNumber,omitempty"`
+	TicketSystem string `json:"ticketSystem,omitempty"`
 }
 
-type GovernanceRoleAssignmentRequestResponse struct {
-	Id                             string                                 `json:"id"`
-	ResourceId                     string                                 `json:"resourceId"`
-	RoleDefinitionId               string                                 `json:"roleDefinitionId"`
-	SubjectId                      string                                 `json:"subjectId"`
-	ScopedResourceId               string                                 `json:"scopedResourceId"`
-	LinkedEligibleRoleAssignmentId string                                 `json:"linkedEligibleRoleAssignmentId"`
-	Type                           string                                 `json:"type"`
-	AssignmentState                string                                 `json:"assignmentState"`
-	RequestedDateTime              string                                 `json:"requestedDateTime"`
-	RoleAssignmentStartDateTime    string                                 `json:"roleAssignmentStartDateTime"`
-	RoleAssignmentEndDateTime      string                                 `json:"roleAssignmentEndDateTime"`
-	Reason                         string                                 `json:"reason"`
-	TicketNumber                   string                                 `json:"ticketNumber"`
-	TicketSystem                   string                                 `json:"ticketSystem"`
-	Condition                      string                                 `json:"condition"`
-	ConditionVersion               string                                 `json:"conditionVersion"`
-	ConditionDescription           string                                 `json:"conditionDescription"`
-	Status                         *GovernanceRoleAssignmentRequestStatus `json:"status"`
-	Schedule                       *GovernanceRoleAssignmentSchedule      `json:"schedule"`
-	Metadata                       map[string]interface{}                 `json:"metadata"`
+// GraphGroup is the expanded group object on a group eligibility instance.
+type GraphGroup struct {
+	Id          string `json:"id"`
+	DisplayName string `json:"displayName"`
+}
+
+// GraphGroupEligibilityInstance is an eligible PIM-for-Groups membership/ownership.
+type GraphGroupEligibilityInstance struct {
+	Id          string      `json:"id"`
+	PrincipalId string      `json:"principalId"`
+	GroupId     string      `json:"groupId"`
+	AccessId    string      `json:"accessId"` // "member" | "owner"
+	Group       *GraphGroup `json:"group"`    // populated via $expand=group
+}
+
+type GraphGroupEligibilityResponse struct {
+	Value []GraphGroupEligibilityInstance `json:"value"`
+}
+
+// GraphRoleDefinition is the expanded role definition on a role eligibility instance.
+type GraphRoleDefinition struct {
+	Id          string `json:"id"`
+	DisplayName string `json:"displayName"`
+}
+
+// GraphRoleEligibilityInstance is an eligible PIM-for-Entra-roles assignment.
+type GraphRoleEligibilityInstance struct {
+	Id               string               `json:"id"`
+	PrincipalId      string               `json:"principalId"`
+	RoleDefinitionId string               `json:"roleDefinitionId"`
+	DirectoryScopeId string               `json:"directoryScopeId"`
+	RoleDefinition   *GraphRoleDefinition `json:"roleDefinition"` // populated via $expand=roleDefinition
+}
+
+type GraphRoleEligibilityResponse struct {
+	Value []GraphRoleEligibilityInstance `json:"value"`
+}
+
+// GraphGroupAssignmentRequest is the body of a PIM-for-Groups selfActivate request.
+type GraphGroupAssignmentRequest struct {
+	Action        string             `json:"action"` // "selfActivate"
+	AccessId      string             `json:"accessId"`
+	PrincipalId   string             `json:"principalId"`
+	GroupId       string             `json:"groupId"`
+	Justification string             `json:"justification"`
+	ScheduleInfo  *GraphScheduleInfo `json:"scheduleInfo"`
+	TicketInfo    *GraphTicketInfo   `json:"ticketInfo,omitempty"`
+}
+
+// GraphRoleAssignmentRequest is the body of a PIM-for-Entra-roles selfActivate request.
+type GraphRoleAssignmentRequest struct {
+	Action           string             `json:"action"` // "selfActivate"
+	PrincipalId      string             `json:"principalId"`
+	RoleDefinitionId string             `json:"roleDefinitionId"`
+	DirectoryScopeId string             `json:"directoryScopeId"`
+	Justification    string             `json:"justification"`
+	ScheduleInfo     *GraphScheduleInfo `json:"scheduleInfo"`
+	TicketInfo       *GraphTicketInfo   `json:"ticketInfo,omitempty"`
+}
+
+// GraphAssignmentScheduleRequest is the response returned when creating an
+// assignment schedule request for either groups or Entra roles.
+type GraphAssignmentScheduleRequest struct {
+	Id              string `json:"id"`
+	Status          string `json:"status"`
+	Action          string `json:"action"`
+	CreatedDateTime string `json:"createdDateTime"`
 }
