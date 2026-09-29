@@ -1,7 +1,7 @@
 # Azure PIM CLI
 *Azure Privileged Identity Management Command Line Interface*
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/netr0m/az-pim-cli.svg)](https://pkg.go.dev/github.com/netr0m/az-pim-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/netr0m/az-pim-cli)](https://goreportcard.com/report/github.com/netr0m/az-pim-cli)
+[![Go Reference](https://pkg.go.dev/badge/github.com/netr0m/az-pim-cli.svg)](https://pkg.go.dev/github.com/netr0m/az-pim-cli)
 
 `az-pim-cli` eases the process of listing and activating Azure PIM roles by allowing activation via the command line.
 It currently supports ['azure resources'](#azure-resources), ['groups'](#groups), and ['entra roles'](#entra-roles)
@@ -39,7 +39,7 @@ See [Configuration options](#configuration-options) for more details
 This tool depends on [`az-cli`](https://learn.microsoft.com/en-us/cli/azure/) for authentication. Please ensure that you've authenticated with your Azure tenant by running the command `az login`. A new browser window will open, asking you to authenticate. This should only be necessary to do once.
 
 #### Entra roles and groups
-`az-pim-cli` is an open-source tool and does not provide an app registration. To list/activate Entra roles or groups, you'll need to register an app of your own.
+`az-pim-cli` is an open-source tool and does not provide an app registration. To list/activate Entra roles or groups, you'll need to register an app of your own. Follow the steps under [Creating the `az-pim-cli` app registration in Azure](#creating-the-az-pim-cli-app-registration-in-azure) to get started.
 
 The first `list`/`activate` call for roles or groups opens a device code sign-in in your browser; a token is then cached locally, so this is only needed again once it expires.
 
@@ -301,3 +301,38 @@ $ go test -v ./...
 Want to contribute to the project? There are a few things you need to know.
 
 See [CONTRIBUTING](./CONTRIBUTING.md) to get started
+
+## Creating the `az-pim-cli` app registration in Azure
+
+> You'll need permissions to create App Registrations in your Azure tenant to complete these steps.
+
+1. Create a new App Registration in Azure by following the steps in [Create an App Registration by hand in the Azure Portal](#create-an-app-registration-by-hand-in-the-azure-portal) or [Create an App Registration with the Bicep template](#create-an-app-registration-with-the-bicep-template).
+2. You might need to grant admin consent for these permissions (either yourself, if you're able to, or ask your tenant admin to).
+3. Note the app's **Application (client) ID** and **Directory (tenant) ID** from the **Overview** page. Pass them to `az-pim-cli` via `--client-id`/`--tenant-id` (or the `clientId`/`tenantId` config, or `PIM_CLIENTID`/`PIM_TENANTID` env vars - see [Configuration options](#configuration-options)).
+
+### Create an App Registration by hand in the Azure Portal
+
+1. Create a new app registration in the [Entra admin center's App Registrations page](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade/quickStartType~/null/sourceType/Microsoft_AAD_IAM) or the [Azure Portal's App Registrations page](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
+    - No redirect URI is needed.
+2. Open the new app's **Authentication**, find the **Settings** tab, and enable **Allow public client flows**. Make sure to save your changes.
+3. Open **API permissions**, click **Add a permission** and select **Microsoft Graph**. Choose **Delegated permissions**, and add:
+   - `RoleEligibilitySchedule.Read.Directory`
+   - `RoleAssignmentSchedule.ReadWrite.Directory`
+   - `PrivilegedEligibilitySchedule.Read.AzureADGroup`
+   - `PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup`
+
+### Create an App Registration with the Bicep template
+
+> The App Registration Bicep template uses the [Microsoft Graph Bicep Extension](https://learn.microsoft.com/en-us/community/content/microsoft-graph-bicep-extension). The dynamic version, referenced as `graphV1` in [`graph-app-registration.bicep`](./modules/graph-app-registration.bicep), is defined in [`bicepconfig.json`](./bicepconfig.json).
+>
+> Note that you might need to adjust the `targetScope` in the Bicep template `app-reg.bicep`, depending on your level of access in the tenant.
+
+1. Make sure [`azure-cli`](https://learn.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) is installed
+2. Run the following:
+    ```sh
+    # Authenticate with azure-cli
+    az login --allow-no-subscriptions
+
+    # Create the app registration. See https://learn.microsoft.com/en-us/azure/reliability/regions-list?tabs=all#azure-regions-list-1 for a list of locations. Use the 'Programmatic name'.
+    az deployment sub create --location <location> --template-file app-reg.bicep
+    ```
