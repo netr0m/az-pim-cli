@@ -19,6 +19,8 @@ var (
 	debugLogging        bool
 	cfgFile             string
 	azureEnv            string
+	clientID            string
+	tenantID            string
 	AzureClientInstance pim.AzureClient
 )
 
@@ -33,14 +35,22 @@ var rootCmd = &cobra.Command{
 			fmt.Printf("Invalid value for --cloud: %q (allowed: global, usgov, china)\n", azureEnv)
 			os.Exit(1)
 		}
-		asmScope, ok := pim.ASM_SCOPES[azureEnv]
+		graphBaseURL, ok := pim.GRAPH_BASE_URLS[azureEnv]
 		if !ok {
-			fmt.Printf("Could not find matching ASM scope for the environment %q\n", azureEnv)
+			fmt.Printf("Invalid value for --cloud: %q (allowed: global, usgov, china)\n", azureEnv)
+			os.Exit(1)
+		}
+		graphAuthorityHost, ok := pim.GRAPH_AUTHORITY_HOSTS[azureEnv]
+		if !ok {
+			fmt.Printf("Invalid value for --cloud: %q (allowed: global, usgov, china)\n", azureEnv)
 			os.Exit(1)
 		}
 		AzureClientInstance = pim.AzureClient{
-			ARMBaseURL: armBaseURL,
-			ASMScope:   asmScope,
+			ARMBaseURL:         armBaseURL,
+			GraphBaseURL:       graphBaseURL,
+			GraphAuthorityHost: graphAuthorityHost,
+			ClientID:           clientID,
+			TenantID:           tenantID,
 		}
 	},
 }
@@ -61,6 +71,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Enable debug logging")
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.az-pim-cli.yaml)")
 	rootCmd.PersistentFlags().StringVar(&azureEnv, "cloud", "global", "Which Azure environment to use ('global', 'usgov', 'china')")
+	rootCmd.PersistentFlags().StringVar(&clientID, "client-id", "", "Client ID of your own app registration, required for Entra role/group commands (see README)")
+	rootCmd.PersistentFlags().StringVar(&tenantID, "tenant-id", "", "Tenant ID of your own app registration, required for Entra role/group commands (see README)")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -102,6 +114,13 @@ func initConfig() {
 	bindFlags(activateEntraRoleCmd, vpr)
 
 	common.InitLogger(debugLogging)
+}
+
+func requireGraphCredentials() {
+	if clientID == "" || tenantID == "" {
+		fmt.Println("Entra role/group commands require an Azure app registration's clientId and tenantId. See the README for how to register your own app.")
+		os.Exit(1)
+	}
 }
 
 func bindFlags(cmd *cobra.Command, vpr *viper.Viper) {

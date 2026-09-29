@@ -84,7 +84,8 @@ func activateGovernanceRole(roleType string) {
 		slog.Error("Invalid role type specified.")
 		os.Exit(1)
 	}
-	token := pim.GetAccessToken(AzureClientInstance.ASMScope, AzureClientInstance)
+	requireGraphCredentials()
+	token := pim.GetGraphAccessToken([]string{pim.GRAPH_DEFAULT_SCOPE}, AzureClientInstance)
 	subjectId := pim.GetUserInfo(token).ObjectId
 
 	eligibleAssignments := pim.GetEligibleGovernanceRoleAssignments(roleType, subjectId, token, AzureClientInstance)
@@ -99,7 +100,7 @@ func activateGovernanceRole(roleType string) {
 		"ticketNumber", ticketNumber,
 		"ticketSystem", ticketSystem,
 		"duration", duration,
-		"startDateTime", assignmentRequest.Schedule.StartDateTime,
+		"startDateTime", assignmentRequest.ScheduleInfo.StartDateTime,
 		"cloud", azureEnv,
 	)
 
@@ -120,7 +121,7 @@ func activateGovernanceRole(roleType string) {
 		"Request completed",
 		"role", roleAssignment.RoleDefinition.DisplayName,
 		"scope", roleAssignment.RoleDefinition.Resource.DisplayName,
-		"status", requestResponse.AssignmentState,
+		"status", requestResponse.Status,
 	)
 
 }

@@ -32,7 +32,8 @@ var listGroupCmd = &cobra.Command{
 	Aliases: []string{"g", "grp", "groups"},
 	Short:   "Query Azure PIM for eligible group assignments",
 	Run: func(cmd *cobra.Command, args []string) {
-		token := pim.GetAccessToken(AzureClientInstance.ASMScope, AzureClientInstance)
+		requireGraphCredentials()
+		token := pim.GetGraphAccessToken([]string{pim.GRAPH_DEFAULT_SCOPE}, AzureClientInstance)
 		subjectId := pim.GetUserInfo(token).ObjectId
 		eligibleGroupAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_AAD_GROUPS, subjectId, token, AzureClientInstance)
 		utils.PrintEligibleGovernanceRoles(eligibleGroupAssignments)
@@ -44,7 +45,8 @@ var listEntraRoleCmd = &cobra.Command{
 	Aliases: []string{"rl", "role", "roles"},
 	Short:   "Query Azure PIM for eligible Entra role assignments",
 	Run: func(cmd *cobra.Command, args []string) {
-		token := pim.GetAccessToken(AzureClientInstance.ASMScope, AzureClientInstance)
+		requireGraphCredentials()
+		token := pim.GetGraphAccessToken([]string{pim.GRAPH_DEFAULT_SCOPE}, AzureClientInstance)
 		subjectId := pim.GetUserInfo(token).ObjectId
 		eligibleEntraRoleAssignments := pim.GetEligibleGovernanceRoleAssignments(pim.ROLE_TYPE_ENTRA_ROLES, subjectId, token, AzureClientInstance)
 		utils.PrintEligibleGovernanceRoles(eligibleEntraRoleAssignments)

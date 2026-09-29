@@ -24,6 +24,7 @@ import (
 // Azure Client interface
 type Client interface {
 	GetAccessToken(scope string) string
+	GetGraphAccessToken(scopes []string) string
 	GetEligibleResourceAssignments(token string) *ResourceAssignmentResponse
 	GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string) *GovernanceRoleAssignmentResponse
 	ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest *ResourceAssignmentRequestRequest, token string) bool
@@ -34,8 +35,11 @@ type Client interface {
 
 // Azure Client implementation
 type AzureClient struct {
-	ARMBaseURL string
-	ASMScope   string
+	ARMBaseURL         string
+	GraphBaseURL       string
+	GraphAuthorityHost string
+	ClientID           string
+	TenantID           string
 }
 
 // Implementation of the GetAccessToken call
@@ -74,6 +78,38 @@ func GetAccessToken(scope string, c Client) string {
 	return c.GetAccessToken(scope)
 }
 
+// Implementation of the GetGraphAccessToken call
+func (c AzureClient) GetGraphAccessToken(scopes []string) string {
+	cachePath, err := graphTokenCachePath()
+	if err != nil {
+		_error := common.Error{
+			Operation: "GetGraphAccessToken",
+			Message:   err.Error(),
+			Err:       err,
+		}
+		slog.Error(_error.Error())
+		os.Exit(1)
+	}
+
+	token, err := acquireGraphToken(c.ClientID, c.TenantID, scopes, cachePath, c.GraphAuthorityHost)
+	if err != nil {
+		_error := common.Error{
+			Operation: "GetGraphAccessToken",
+			Message:   err.Error(),
+			Status:    "401",
+			Err:       err,
+		}
+		slog.Error(_error.Error())
+		os.Exit(1)
+	}
+
+	return token
+}
+
+func GetGraphAccessToken(scopes []string, c Client) string {
+	return c.GetGraphAccessToken(scopes)
+}
+
 func GetUserInfo(token string) AzureUserInfo {
 	// Decode token
 	decoded, err := jwt.ParseWithClaims(token, &AzureUserInfoClaims{}, nil)
@@ -106,14 +142,17 @@ func Request(request *PIMRequest, responseModel any) any {
 	// Prepare request body
 	var req *http.Request
 	var err error
+	var payloadBytes []byte
 	_error := common.Error{
 		Operation: "Request",
 	}
 
 	if request.Payload != nil {
-		payload := new(bytes.Buffer)
-		json.NewEncoder(payload).Encode(request.Payload) //nolint:errcheck
-		req, err = http.NewRequest(request.Method, request.Url, payload)
+		payloadBytes, err = json.Marshal(request.Payload)
+		if err != nil {
+			handleRequestErr(&_error, err, req)
+		}
+		req, err = http.NewRequest(request.Method, request.Url, bytes.NewReader(payloadBytes))
 		if err != nil {
 			handleRequestErr(&_error, err, req)
 		}
@@ -123,6 +162,7 @@ func Request(request *PIMRequest, responseModel any) any {
 			handleRequestErr(&_error, err, req)
 		}
 	}
+	_error.Request = string(payloadBytes)
 
 	// Add headers
 	req.Header.Set("Content-Type", "application/json")
@@ -138,16 +178,8 @@ func Request(request *PIMRequest, responseModel any) any {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		defer func() {
-			if err := res.Body.Close(); err != nil {
-				slog.Error(fmt.Sprintf("Failed to close response body: %v", err))
-			}
-		}()
 		_error.Message = err.Error()
-		_error.Status = res.Status
 		_error.Err = err
-		_error.Request = req
-		_error.Response = res
 		slog.Error(_error.Error())
 		slog.Debug(_error.Debug())
 		os.Exit(1)
@@ -163,7 +195,6 @@ func Request(request *PIMRequest, responseModel any) any {
 		_error.Message = err.Error()
 		_error.Status = res.Status
 		_error.Err = err
-		_error.Request = req
 		_error.Response = res
 		slog.Error(_error.Error())
 		slog.Debug(_error.Debug())
@@ -176,7 +207,6 @@ func Request(request *PIMRequest, responseModel any) any {
 		_error.Message = message
 		_error.Status = res.Status
 		_error.Err = err
-		_error.Request = req
 		_error.Response = res
 		slog.Error(_error.Error())
 		slog.Debug(_error.Debug())
@@ -188,7 +218,6 @@ func Request(request *PIMRequest, responseModel any) any {
 		_error.Message = err.Error()
 		_error.Status = res.Status
 		_error.Err = err
-		_error.Request = req
 		_error.Response = res
 		slog.Error(_error.Error())
 		slog.Debug(_error.Debug())
@@ -227,19 +256,43 @@ func (c AzureClient) GetEligibleGovernanceRoleAssignments(roleType string, subje
 		slog.Error(_error.Error())
 		os.Exit(1)
 	}
-	params := map[string]string{
-		"$expand": "linkedEligibleRoleAssignment,subject,scopedResource,roleDefinition($expand=resource)",
-		"$filter": fmt.Sprintf("(subject/id eq '%s') and (assignmentState eq 'Eligible')", subjectId),
-	}
+
 	responseModel := &GovernanceRoleAssignmentResponse{}
-	_ = Request(&PIMRequest{
-		Url:    fmt.Sprintf("%s/%s/%s/roleAssignments", AZ_RBAC_BASE_URL, AZ_RBAC_BASE_PATH, roleType),
-		Token:  token,
-		Method: "GET",
-		Params: params,
-	}, responseModel)
+	principalFilter := fmt.Sprintf("principalId eq '%s'", subjectId)
+
+	switch roleType {
+	case ROLE_TYPE_ENTRA_ROLES:
+		raw := &graphRoleEligibilityScheduleInstanceResponse{}
+		_ = Request(&PIMRequest{
+			Url:    fmt.Sprintf("%s/%s/roleManagement/directory/roleEligibilityScheduleInstances", c.GraphBaseURL, GRAPH_API_VERSION),
+			Token:  token,
+			Method: "GET",
+			Params: map[string]string{"$filter": principalFilter, "$expand": "roleDefinition,principal"},
+		}, raw)
+		for _, instance := range raw.Value {
+			responseModel.Value = append(responseModel.Value, instance.toGovernanceRoleAssignment(subjectId))
+		}
+	case ROLE_TYPE_AAD_GROUPS:
+		raw := &graphGroupEligibilityScheduleInstanceResponse{}
+		_ = Request(&PIMRequest{
+			Url:    fmt.Sprintf("%s/%s/identityGovernance/privilegedAccess/group/eligibilityScheduleInstances", c.GraphBaseURL, GRAPH_API_VERSION),
+			Token:  token,
+			Method: "GET",
+			Params: map[string]string{"$filter": principalFilter, "$expand": "group,principal"},
+		}, raw)
+		for _, instance := range raw.Value {
+			responseModel.Value = append(responseModel.Value, instance.toGovernanceRoleAssignment(subjectId))
+		}
+	}
 
 	return responseModel
+}
+
+func (c AzureClient) governanceRoleAssignmentScheduleRequestsURL(roleType string) string {
+	if roleType == ROLE_TYPE_AAD_GROUPS {
+		return fmt.Sprintf("%s/%s/identityGovernance/privilegedAccess/group/assignmentScheduleRequests", c.GraphBaseURL, GRAPH_API_VERSION)
+	}
+	return fmt.Sprintf("%s/%s/roleManagement/directory/roleAssignmentScheduleRequests", c.GraphBaseURL, GRAPH_API_VERSION)
 }
 
 func GetEligibleGovernanceRoleAssignments(roleType string, subjectId string, token string, c Client) *GovernanceRoleAssignmentResponse {
@@ -282,18 +335,14 @@ func ValidateResourceAssignmentRequest(scope string, resourceAssignmentRequest *
 }
 
 func (c AzureClient) ValidateGovernanceRoleAssignmentRequest(roleType string, roleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) bool {
-	params := map[string]string{
-		"evaluateOnly": "true",
-	}
-
 	governanceRoleAssignmentValidationRequest := roleAssignmentRequest
+	governanceRoleAssignmentValidationRequest.IsValidationOnly = true
 
 	validationResponse := &GovernanceRoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
-		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_RBAC_BASE_URL, AZ_RBAC_BASE_PATH, roleType),
+		Url:     c.governanceRoleAssignmentScheduleRequestsURL(roleType),
 		Token:   token,
 		Method:  "POST",
-		Params:  params,
 		Payload: governanceRoleAssignmentValidationRequest,
 	}, validationResponse)
 
@@ -341,7 +390,7 @@ func RequestResourceAssignment(scope string, resourceAssignmentRequest *Resource
 func (c AzureClient) RequestGovernanceRoleAssignment(roleType string, governanceRoleAssignmentRequest *GovernanceRoleAssignmentRequest, token string) *GovernanceRoleAssignmentRequestResponse {
 	responseModel := &GovernanceRoleAssignmentRequestResponse{}
 	_ = Request(&PIMRequest{
-		Url:     fmt.Sprintf("%s/%s/%s/roleAssignmentRequests", AZ_RBAC_BASE_URL, AZ_RBAC_BASE_PATH, roleType),
+		Url:     c.governanceRoleAssignmentScheduleRequestsURL(roleType),
 		Token:   token,
 		Method:  "POST",
 		Payload: governanceRoleAssignmentRequest,
