@@ -26,6 +26,60 @@ func TestParseDateTime(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("2024-12-31T13:37:00%s", currentTZ), dateTime, errMsg)
 }
 
+func TestGraphRoleEligibilityScheduleInstanceToGovernanceRoleAssignment(t *testing.T) {
+	instance := graphRoleEligibilityScheduleInstance{
+		Id:               "instance-1",
+		PrincipalId:      TEST_DUMMY_PRINCIPAL_ID,
+		RoleDefinitionId: "role-def-1",
+		DirectoryScopeId: "/",
+		RoleDefinition:   &graphRoleDefinition{Id: "role-def-1", DisplayName: "Global Reader"},
+		Principal:        &graphPrincipal{Id: TEST_DUMMY_PRINCIPAL_ID, DisplayName: TEST_DUMMY_PRINCIPAL_NAME},
+	}
+
+	assignment := instance.toGovernanceRoleAssignment(TEST_DUMMY_PRINCIPAL_ID)
+
+	assert.Equal(t, "instance-1", assignment.Id)
+	assert.Equal(t, "/", assignment.ResourceId, "expected ResourceId to hold directoryScopeId for Entra roles")
+	assert.Equal(t, "role-def-1", assignment.RoleDefinitionId)
+	assert.Equal(t, TEST_DUMMY_PRINCIPAL_ID, assignment.SubjectId)
+	assert.Equal(t, "Global Reader", assignment.RoleDefinition.DisplayName)
+	assert.Equal(t, "Global Reader", assignment.RoleDefinition.Resource.DisplayName, "expected the Resource grouping to mirror the role name for Entra roles")
+	assert.Equal(t, TEST_DUMMY_PRINCIPAL_NAME, assignment.Subject.DisplayName)
+}
+
+func TestGraphRoleEligibilityScheduleInstanceToGovernanceRoleAssignmentWithoutExpand(t *testing.T) {
+	instance := graphRoleEligibilityScheduleInstance{
+		Id:               "instance-1",
+		RoleDefinitionId: "role-def-1",
+		DirectoryScopeId: "/",
+	}
+
+	assignment := instance.toGovernanceRoleAssignment(TEST_DUMMY_PRINCIPAL_ID)
+
+	assert.Equal(t, "role-def-1", assignment.RoleDefinition.DisplayName, "expected a fallback to the raw role definition ID when $expand=roleDefinition is absent")
+	assert.Nil(t, assignment.Subject, "expected no Subject when $expand=principal is absent")
+}
+
+func TestGraphGroupEligibilityScheduleInstanceToGovernanceRoleAssignment(t *testing.T) {
+	instance := graphGroupEligibilityScheduleInstance{
+		Id:          "instance-1",
+		PrincipalId: TEST_DUMMY_PRINCIPAL_ID,
+		GroupId:     TEST_DUMMY_GROUP_1_ID,
+		AccessId:    "member",
+		Group:       &graphGroup{Id: TEST_DUMMY_GROUP_1_ID, DisplayName: TEST_DUMMY_GROUP_1_NAME},
+		Principal:   &graphPrincipal{Id: TEST_DUMMY_PRINCIPAL_ID, DisplayName: TEST_DUMMY_PRINCIPAL_NAME},
+	}
+
+	assignment := instance.toGovernanceRoleAssignment(TEST_DUMMY_PRINCIPAL_ID)
+
+	assert.Equal(t, "instance-1", assignment.Id)
+	assert.Equal(t, TEST_DUMMY_GROUP_1_ID, assignment.ResourceId)
+	assert.Equal(t, "member", assignment.AccessId, "expected AccessId to be kept verbatim for building the activation request")
+	assert.Equal(t, "Member", assignment.RoleDefinition.DisplayName, "expected AccessId to be capitalized for display")
+	assert.Equal(t, TEST_DUMMY_GROUP_1_NAME, assignment.RoleDefinition.Resource.DisplayName)
+	assert.Equal(t, TEST_DUMMY_PRINCIPAL_NAME, assignment.Subject.DisplayName)
+}
+
 func TestCreateResourceAssignmentRequest(t *testing.T) {
 	resourceAssignment := &EligibleResourceAssignmentsDummyData.Value[0]
 	tests := []struct {

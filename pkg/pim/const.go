@@ -15,14 +15,30 @@ const (
 	ARM_CN_BASE_URL     = "https://management.chinacloudapi.cn"
 )
 
-// Base URL for the Azure RBAC (Governance Role) API (Entra Groups and Entra Roles)
-const AZ_RBAC_BASE_URL string = "https://api.azrbac.mspim.azure.com"
-
 // Base path for the Azure Resource Manager PIM API
 const ARM_BASE_PATH string = "providers/Microsoft.Authorization"
 
-// Base path for the Azure RBAC (Governance Role) API
-const AZ_RBAC_BASE_PATH = "api/v2/privilegedAccess"
+// Base URLs for Microsoft Graph (Entra Groups and Entra Roles) per Azure environment.
+// See https://learn.microsoft.com/en-us/graph/deployments
+const (
+	GRAPH_GLOBAL_BASE_URL = "https://graph.microsoft.com"
+	GRAPH_USGOV_BASE_URL  = "https://graph.microsoft.us"
+	GRAPH_CN_BASE_URL     = "https://microsoftgraph.chinacloudapi.cn"
+)
+
+// Microsoft Entra authority hosts per Azure environment, used for MSAL device code sign-in.
+// See https://learn.microsoft.com/en-us/entra/identity-platform/authentication-national-cloud
+const (
+	GRAPH_GLOBAL_AUTHORITY_HOST = "login.microsoftonline.com"
+	GRAPH_USGOV_AUTHORITY_HOST  = "login.microsoftonline.us"
+	GRAPH_CN_AUTHORITY_HOST     = "login.partner.microsoftonline.cn"
+)
+
+// API version for Microsoft Graph
+const GRAPH_API_VERSION string = "v1.0"
+
+// Default scope requested for Microsoft Graph tokens.
+const GRAPH_DEFAULT_SCOPE string = "https://graph.microsoft.com/.default"
 
 // Default reason for role activation
 const DEFAULT_REASON string = "config"
@@ -39,11 +55,6 @@ const (
 	ROLE_TYPE_ENTRA_ROLES = "aadroles"
 )
 
-// Scope for the Azure Service Management (ASM) token (Entra Groups and Entra Roles)
-const (
-	ASM_GLOBAL_BASE_URL = "https://management.core.windows.net"
-)
-
 // Base URLs for different Azure environments
 var ARM_BASE_URLS = map[string]string{
 	"global": ARM_GLOBAL_BASE_URL,
@@ -51,9 +62,16 @@ var ARM_BASE_URLS = map[string]string{
 	"china":  ARM_CN_BASE_URL,
 }
 
-// Scopes for the Entra roles/groups for different Azure environments
-var ASM_SCOPES = map[string]string{
-	"global": ASM_GLOBAL_BASE_URL,
-	"usgov":  ARM_USGOV_BASE_URL,
-	"china":  ARM_CN_BASE_URL,
+// Microsoft Graph base URLs for different Azure environments
+var GRAPH_BASE_URLS = map[string]string{
+	"global": GRAPH_GLOBAL_BASE_URL,
+	"usgov":  GRAPH_USGOV_BASE_URL,
+	"china":  GRAPH_CN_BASE_URL,
+}
+
+// Microsoft Entra authority hosts for different Azure environments
+var GRAPH_AUTHORITY_HOSTS = map[string]string{
+	"global": GRAPH_GLOBAL_AUTHORITY_HOST,
+	"usgov":  GRAPH_USGOV_AUTHORITY_HOST,
+	"china":  GRAPH_CN_AUTHORITY_HOST,
 }

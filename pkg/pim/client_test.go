@@ -21,6 +21,23 @@ func (m *mockClient) GetAccessToken(scope string) string {
 	return args.String(0)
 }
 
+func (m *mockClient) GetGraphAccessToken(scopes []string) string {
+	args := m.Called(scopes)
+	return args.String(0)
+}
+
+func TestGetGraphAccessToken(t *testing.T) {
+	m := newMockClient()
+	scopes := []string{"https://graph.microsoft.com/.default"}
+
+	m.On("GetGraphAccessToken", scopes).Return(TEST_DUMMY_JWT)
+
+	token := GetGraphAccessToken(scopes, m)
+
+	assert.Equal(t, TEST_DUMMY_JWT, token)
+	m.AssertCalled(t, "GetGraphAccessToken", scopes)
+}
+
 func TestGetAccessToken(t *testing.T) {
 	m := newMockClient()
 
@@ -201,21 +218,14 @@ func TestRequestGovernanceRoleAssignmentAADGroup(t *testing.T) {
 	governanceRoleAssignment := &EligibleGovernanceRoleAssignmentsDummyData.Value[0]
 	roleType, governanceRoleAssignmentRequest := CreateGovernanceRoleAssignmentRequest(TEST_DUMMY_PRINCIPAL_ID, ROLE_TYPE_AAD_GROUPS, governanceRoleAssignment, DEFAULT_DURATION_MINUTES, "", "", DEFAULT_REASON, "Test", "1337")
 	governanceRoleAssignmentRequestResponse := &GovernanceRoleAssignmentRequestResponse{
-		Id:               governanceRoleAssignment.Id,
-		ResourceId:       governanceRoleAssignmentRequest.ResourceId,
-		RoleDefinitionId: governanceRoleAssignmentRequest.RoleDefinitionId,
-		SubjectId:        governanceRoleAssignment.SubjectId,
-		AssignmentState:  governanceRoleAssignmentRequest.AssignmentState,
-		Status: &GovernanceRoleAssignmentRequestStatus{
-			Status:    "Active",
-			SubStatus: "Active",
-		},
-		TicketSystem:                   "Test",
-		TicketNumber:                   "1337",
-		Reason:                         DEFAULT_REASON,
-		Schedule:                       governanceRoleAssignmentRequest.Schedule,
-		LinkedEligibleRoleAssignmentId: governanceRoleAssignmentRequest.LinkedEligibleRoleAssignmentId,
-		ScopedResourceId:               governanceRoleAssignmentRequest.ScopedResourceId,
+		Id:            governanceRoleAssignment.Id,
+		Status:        "Granted",
+		PrincipalId:   governanceRoleAssignmentRequest.PrincipalId,
+		GroupId:       governanceRoleAssignmentRequest.GroupId,
+		AccessId:      governanceRoleAssignmentRequest.AccessId,
+		Justification: DEFAULT_REASON,
+		ScheduleInfo:  governanceRoleAssignmentRequest.ScheduleInfo,
+		TicketInfo:    governanceRoleAssignmentRequest.TicketInfo,
 	}
 
 	m.On("RequestGovernanceRoleAssignment", ROLE_TYPE_AAD_GROUPS, governanceRoleAssignmentRequest, TEST_DUMMY_JWT).Return(governanceRoleAssignmentRequestResponse)
@@ -223,8 +233,8 @@ func TestRequestGovernanceRoleAssignmentAADGroup(t *testing.T) {
 	requestResponse := RequestGovernanceRoleAssignment(roleType, governanceRoleAssignmentRequest, TEST_DUMMY_JWT, m)
 	expectedDuration := fmt.Sprintf("PT%dM", DEFAULT_DURATION_MINUTES)
 
-	assert.Equal(t, requestResponse.Reason, DEFAULT_REASON, "expected governance role assignment request reason to be %s, got %s", DEFAULT_REASON, requestResponse.Reason)
-	assert.Equal(t, requestResponse.SubjectId, TEST_DUMMY_PRINCIPAL_ID, "expected governance role assignment request subject ID to be %s, got %s", TEST_DUMMY_PRINCIPAL_ID, requestResponse.SubjectId)
-	assert.Equal(t, requestResponse.Status.Status, "Active", "expected governance role assignment request status to be %s, got %s", "Active", requestResponse.Status.Status)
-	assert.Equal(t, requestResponse.Schedule.Duration, expectedDuration, "expected governance role assignment request expiration duration to be %s, got %s", expectedDuration, requestResponse.Schedule.Duration)
+	assert.Equal(t, requestResponse.Justification, DEFAULT_REASON, "expected governance role assignment request justification to be %s, got %s", DEFAULT_REASON, requestResponse.Justification)
+	assert.Equal(t, requestResponse.PrincipalId, TEST_DUMMY_PRINCIPAL_ID, "expected governance role assignment request principal ID to be %s, got %s", TEST_DUMMY_PRINCIPAL_ID, requestResponse.PrincipalId)
+	assert.Equal(t, requestResponse.Status, "Granted", "expected governance role assignment request status to be %s, got %s", "Granted", requestResponse.Status)
+	assert.Equal(t, requestResponse.ScheduleInfo.Expiration.Duration, expectedDuration, "expected governance role assignment request expiration duration to be %s, got %s", expectedDuration, requestResponse.ScheduleInfo.Expiration.Duration)
 }

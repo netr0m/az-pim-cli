@@ -22,7 +22,7 @@ func IsResourceAssignmentRequestFailed(requestResponse *ResourceAssignmentReques
 }
 
 func IsGovernanceRoleAssignmentRequestFailed(requestResponse *GovernanceRoleAssignmentRequestResponse) bool {
-	switch requestResponse.Status.SubStatus {
+	switch requestResponse.Status {
 	case StatusAdminDenied, StatusCanceled, StatusDenied, StatusFailed, StatusFailedAsResourceIsLocked, StatusInvalid, StatusRevoked, StatusTimedOut:
 		return true
 	}
@@ -38,7 +38,7 @@ func IsResourceAssignmentRequestPending(requestResponse *ResourceAssignmentReque
 }
 
 func IsGovernanceRoleAssignmentRequestPending(requestResponse *GovernanceRoleAssignmentRequestResponse) bool {
-	switch requestResponse.Status.SubStatus {
+	switch requestResponse.Status {
 	case StatusPendingAdminDecision, StatusPendingApproval, StatusPendingApprovalProvisioning, StatusPendingEvaluation, StatusPendingExternalProvisioning, StatusPendingProvisioning, StatusPendingRevocation, StatusPendingScheduleCreation:
 		return true
 	}
@@ -54,7 +54,7 @@ func IsResourceAssignmentRequestOK(requestResponse *ResourceAssignmentRequestRes
 }
 
 func IsGovernanceRoleAssignmentRequestOK(requestResponse *GovernanceRoleAssignmentRequestResponse) bool {
-	switch requestResponse.Status.SubStatus {
+	switch requestResponse.Status {
 	case StatusAccepted, StatusAdminApproved, StatusGranted, StatusProvisioned, StatusProvisioningStarted, StatusScheduleCreated:
 		return true
 	}
@@ -99,7 +99,7 @@ func (response *GovernanceRoleAssignmentRequestResponse) CheckGovernanceRoleAssi
 		_error := common.Error{
 			Operation: "CheckGovernanceRoleAssignmentResult",
 			Message:   "The role assignment validation failed",
-			Status:    response.Status.Status,
+			Status:    response.Status,
 			Request:   request,
 			Response:  response,
 		}
@@ -108,11 +108,11 @@ func (response *GovernanceRoleAssignmentRequestResponse) CheckGovernanceRoleAssi
 		return false
 	}
 	if IsGovernanceRoleAssignmentRequestOK(response) {
-		slog.Info("The role assignment request was successful", "status", response.Status.Status, "subStatus", response.Status.SubStatus)
+		slog.Info("The role assignment request was successful", "status", response.Status)
 		return true
 	}
 	if IsGovernanceRoleAssignmentRequestPending(response) {
-		slog.Warn("The role assignment request is pending", "status", response.Status.Status, "subStatus", response.Status.SubStatus)
+		slog.Warn("The role assignment request is pending", "status", response.Status)
 		return true
 	}
 
@@ -214,8 +214,8 @@ func CreateResourceAssignmentRequestWithScope(subjectId string, resourceAssignme
 	return scope, resourceAssignmentRequest
 }
 
-func CreateGovernanceRoleAssignmentScheduleInfo(duration int, startDate string, startTime string) *GovernanceRoleAssignmentSchedule {
-	var scheduleStart interface{}
+func CreateGovernanceRoleAssignmentScheduleInfo(duration int, startDate string, startTime string) *ScheduleInfo {
+	scheduleStart := time.Now().Local().Format("2006-01-02T15:04:05-07:00")
 	if (startDate != "") || (startTime != "") {
 		startDateTime, err := parseDateTime(startDate, startTime)
 		if err != nil {
@@ -226,11 +226,12 @@ func CreateGovernanceRoleAssignmentScheduleInfo(duration int, startDate string, 
 		scheduleStart = startDateTime
 	}
 
-	return &GovernanceRoleAssignmentSchedule{
-		Type:          "Once",
+	return &ScheduleInfo{
 		StartDateTime: scheduleStart,
-		EndDateTime:   nil,
-		Duration:      fmt.Sprintf("PT%dM", duration),
+		Expiration: &ScheduleInfoExpiration{
+			Type:     "afterDuration",
+			Duration: fmt.Sprintf("PT%dM", duration),
+		},
 	}
 }
 
@@ -244,22 +245,97 @@ func CreateGovernanceRoleAssignmentRequest(subjectId string, roleType string, go
 		os.Exit(1)
 	}
 
-	scheduleInfo := CreateGovernanceRoleAssignmentScheduleInfo(duration, startDate, startTime)
 	governanceRoleAssignmentRequest := &GovernanceRoleAssignmentRequest{
-		RoleDefinitionId:               governanceRoleAssignment.RoleDefinitionId,
-		ResourceId:                     governanceRoleAssignment.ResourceId,
-		SubjectId:                      subjectId,
-		AssignmentState:                "Active",
-		Type:                           "UserAdd",
-		Reason:                         reason,
-		TicketNumber:                   ticketNumber,
-		TicketSystem:                   ticketSystem,
-		Schedule:                       scheduleInfo,
-		LinkedEligibleRoleAssignmentId: governanceRoleAssignment.Id,
-		ScopedResourceId:               "",
+		Action:           "selfActivate",
+		PrincipalId:      subjectId,
+		Justification:    reason,
+		ScheduleInfo:     CreateGovernanceRoleAssignmentScheduleInfo(duration, startDate, startTime),
+		TicketInfo:       &TicketInfo{TicketNumber: ticketNumber, TicketSystem: ticketSystem},
+		IsValidationOnly: false,
+	}
+
+	switch roleType {
+	case ROLE_TYPE_ENTRA_ROLES:
+		governanceRoleAssignmentRequest.RoleDefinitionId = governanceRoleAssignment.RoleDefinitionId
+		governanceRoleAssignmentRequest.DirectoryScopeId = governanceRoleAssignment.ResourceId
+	case ROLE_TYPE_AAD_GROUPS:
+		governanceRoleAssignmentRequest.GroupId = governanceRoleAssignment.ResourceId
+		governanceRoleAssignmentRequest.AccessId = governanceRoleAssignment.AccessId
 	}
 
 	return roleType, governanceRoleAssignmentRequest
+}
+
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+func (instance graphRoleEligibilityScheduleInstance) toGovernanceRoleAssignment(subjectId string) GovernanceRoleAssignment {
+	roleName := instance.RoleDefinitionId
+	if instance.RoleDefinition != nil {
+		roleName = instance.RoleDefinition.DisplayName
+	}
+
+	assignment := GovernanceRoleAssignment{
+		Id:               instance.Id,
+		ResourceId:       instance.DirectoryScopeId,
+		RoleDefinitionId: instance.RoleDefinitionId,
+		SubjectId:        subjectId,
+		AssignmentState:  "Eligible",
+		RoleDefinition: &GovernanceRoleDefinition{
+			Id:          instance.RoleDefinitionId,
+			DisplayName: roleName,
+			Resource: &GovernanceRoleResource{
+				Id:          instance.RoleDefinitionId,
+				Type:        "role",
+				DisplayName: roleName,
+			},
+		},
+	}
+	if instance.Principal != nil {
+		assignment.Subject = &GovernanceRoleAssignmentSubject{
+			Id:          instance.Principal.Id,
+			DisplayName: instance.Principal.DisplayName,
+		}
+	}
+
+	return assignment
+}
+
+func (instance graphGroupEligibilityScheduleInstance) toGovernanceRoleAssignment(subjectId string) GovernanceRoleAssignment {
+	groupName := instance.GroupId
+	if instance.Group != nil {
+		groupName = instance.Group.DisplayName
+	}
+	accessName := capitalize(instance.AccessId)
+
+	assignment := GovernanceRoleAssignment{
+		Id:              instance.Id,
+		ResourceId:      instance.GroupId,
+		AccessId:        instance.AccessId,
+		SubjectId:       subjectId,
+		AssignmentState: "Eligible",
+		RoleDefinition: &GovernanceRoleDefinition{
+			Id:          instance.AccessId,
+			DisplayName: accessName,
+			Resource: &GovernanceRoleResource{
+				Id:          instance.GroupId,
+				Type:        "group",
+				DisplayName: groupName,
+			},
+		},
+	}
+	if instance.Principal != nil {
+		assignment.Subject = &GovernanceRoleAssignmentSubject{
+			Id:          instance.Principal.Id,
+			DisplayName: instance.Principal.DisplayName,
+		}
+	}
+
+	return assignment
 }
 
 func (resourceAssignment *ResourceAssignment) Debug() string {

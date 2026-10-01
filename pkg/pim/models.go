@@ -91,6 +91,7 @@ type GovernanceRoleAssignment struct {
 	Id               string                           `json:"id"`
 	ResourceId       string                           `json:"resourceId"`
 	RoleDefinitionId string                           `json:"roleDefinitionId"`
+	AccessId         string                           `json:"accessId"`
 	SubjectId        string                           `json:"subjectId"`
 	AssignmentState  string                           `json:"assignmentState"`
 	Status           string                           `json:"status"`
@@ -100,6 +101,49 @@ type GovernanceRoleAssignment struct {
 
 type GovernanceRoleAssignmentResponse struct {
 	Value []GovernanceRoleAssignment `json:"value"`
+}
+
+type graphRoleDefinition struct {
+	Id          string `json:"id"`
+	DisplayName string `json:"displayName"`
+}
+
+type graphPrincipal struct {
+	Id          string `json:"id"`
+	DisplayName string `json:"displayName"`
+}
+
+type graphRoleEligibilityScheduleInstance struct {
+	Id                        string               `json:"id"`
+	PrincipalId               string               `json:"principalId"`
+	RoleDefinitionId          string               `json:"roleDefinitionId"`
+	DirectoryScopeId          string               `json:"directoryScopeId"`
+	RoleEligibilityScheduleId string               `json:"roleEligibilityScheduleId"`
+	RoleDefinition            *graphRoleDefinition `json:"roleDefinition"`
+	Principal                 *graphPrincipal      `json:"principal"`
+}
+
+type graphRoleEligibilityScheduleInstanceResponse struct {
+	Value []graphRoleEligibilityScheduleInstance `json:"value"`
+}
+
+type graphGroup struct {
+	Id          string `json:"id"`
+	DisplayName string `json:"displayName"`
+}
+
+type graphGroupEligibilityScheduleInstance struct {
+	Id                    string          `json:"id"`
+	PrincipalId           string          `json:"principalId"`
+	GroupId               string          `json:"groupId"`
+	AccessId              string          `json:"accessId"`
+	EligibilityScheduleId string          `json:"eligibilityScheduleId"`
+	Group                 *graphGroup     `json:"group"`
+	Principal             *graphPrincipal `json:"principal"`
+}
+
+type graphGroupEligibilityScheduleInstanceResponse struct {
+	Value []graphGroupEligibilityScheduleInstance `json:"value"`
 }
 
 type TicketInfo struct {
@@ -115,7 +159,7 @@ type ScheduleInfoExpiration struct {
 type ScheduleInfo struct {
 	StartDateTime interface{}             `json:"startDateTime"`
 	Expiration    *ScheduleInfoExpiration `json:"expiration"`
-	EndDateTime   interface{}             `json:"endDateTime"`
+	EndDateTime   interface{}             `json:"endDateTime,omitempty"`
 }
 
 const (
@@ -183,52 +227,30 @@ type ResourceAssignmentRequestRequest struct {
 	Properties ResourceAssignmentRequestProperties `json:"Properties"`
 }
 
-type GovernanceRoleAssignmentSchedule struct {
-	Type          string      `json:"type"`
-	StartDateTime interface{} `json:"startDateTime"`
-	EndDateTime   interface{} `json:"endDateTime"`
-	Duration      string      `json:"duration"`
-}
-
 type GovernanceRoleAssignmentRequest struct {
-	RoleDefinitionId               string                            `json:"roleDefinitionId"`
-	ResourceId                     string                            `json:"resourceId"`
-	SubjectId                      string                            `json:"subjectId"`
-	AssignmentState                string                            `json:"assignmentState"`
-	Type                           string                            `json:"type"`
-	Reason                         string                            `json:"reason"`
-	TicketNumber                   string                            `json:"ticketNumber"`
-	TicketSystem                   string                            `json:"ticketSystem"`
-	Schedule                       *GovernanceRoleAssignmentSchedule `json:"schedule"`
-	LinkedEligibleRoleAssignmentId string                            `json:"linkedEligibleRoleAssignmentId"`
-	ScopedResourceId               string                            `json:"scopedResourceId"`
-}
-
-type GovernanceRoleAssignmentRequestStatus struct {
-	Status        string              `json:"status"`
-	SubStatus     string              `json:"subStatus"`
-	StatusDetails []map[string]string `json:"statusDetails"`
+	Action           string        `json:"action"`
+	PrincipalId      string        `json:"principalId"`
+	RoleDefinitionId string        `json:"roleDefinitionId,omitempty"`
+	DirectoryScopeId string        `json:"directoryScopeId,omitempty"`
+	GroupId          string        `json:"groupId,omitempty"`
+	AccessId         string        `json:"accessId,omitempty"`
+	Justification    string        `json:"justification"`
+	ScheduleInfo     *ScheduleInfo `json:"scheduleInfo"`
+	TicketInfo       *TicketInfo   `json:"ticketInfo"`
+	IsValidationOnly bool          `json:"isValidationOnly"`
 }
 
 type GovernanceRoleAssignmentRequestResponse struct {
-	Id                             string                                 `json:"id"`
-	ResourceId                     string                                 `json:"resourceId"`
-	RoleDefinitionId               string                                 `json:"roleDefinitionId"`
-	SubjectId                      string                                 `json:"subjectId"`
-	ScopedResourceId               string                                 `json:"scopedResourceId"`
-	LinkedEligibleRoleAssignmentId string                                 `json:"linkedEligibleRoleAssignmentId"`
-	Type                           string                                 `json:"type"`
-	AssignmentState                string                                 `json:"assignmentState"`
-	RequestedDateTime              string                                 `json:"requestedDateTime"`
-	RoleAssignmentStartDateTime    string                                 `json:"roleAssignmentStartDateTime"`
-	RoleAssignmentEndDateTime      string                                 `json:"roleAssignmentEndDateTime"`
-	Reason                         string                                 `json:"reason"`
-	TicketNumber                   string                                 `json:"ticketNumber"`
-	TicketSystem                   string                                 `json:"ticketSystem"`
-	Condition                      string                                 `json:"condition"`
-	ConditionVersion               string                                 `json:"conditionVersion"`
-	ConditionDescription           string                                 `json:"conditionDescription"`
-	Status                         *GovernanceRoleAssignmentRequestStatus `json:"status"`
-	Schedule                       *GovernanceRoleAssignmentSchedule      `json:"schedule"`
-	Metadata                       map[string]interface{}                 `json:"metadata"`
+	Id               string        `json:"id"`
+	Status           string        `json:"status"`
+	PrincipalId      string        `json:"principalId"`
+	RoleDefinitionId string        `json:"roleDefinitionId,omitempty"`
+	DirectoryScopeId string        `json:"directoryScopeId,omitempty"`
+	GroupId          string        `json:"groupId,omitempty"`
+	AccessId         string        `json:"accessId,omitempty"`
+	IsValidationOnly bool          `json:"isValidationOnly"`
+	TargetScheduleId string        `json:"targetScheduleId"`
+	Justification    string        `json:"justification"`
+	ScheduleInfo     *ScheduleInfo `json:"scheduleInfo"`
+	TicketInfo       *TicketInfo   `json:"ticketInfo"`
 }

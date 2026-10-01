@@ -1,10 +1,14 @@
 # Azure PIM CLI
 *Azure Privileged Identity Management Command Line Interface*
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/netr0m/az-pim-cli.svg)](https://pkg.go.dev/github.com/netr0m/az-pim-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/netr0m/az-pim-cli)](https://goreportcard.com/report/github.com/netr0m/az-pim-cli)
+[![Go Reference](https://pkg.go.dev/badge/github.com/netr0m/az-pim-cli.svg)](https://pkg.go.dev/github.com/netr0m/az-pim-cli)
 
-`az-pim-cli` eases the process of listing and activating Azure PIM roles by allowing activation via the command line. Authentication is handled with the `azure.identity` library by utilizing the `AzureCLICredential` method.
+`az-pim-cli` eases the process of listing and activating Azure PIM roles by allowing activation via the command line.
 It currently supports ['azure resources'](#azure-resources), ['groups'](#groups), and ['entra roles'](#entra-roles)
+
+Authentication differs by resource type:
+- **Azure resources** authenticate via your existing `az login` session (`azure.identity`'s `AzureCLICredential`).
+- **Entra roles and groups** authenticate with a Microsoft Entra app registration (device code sign-in) - see [Prerequisites](#prerequisites). You'll need to provide your own Entra app registration to use with this tool. See [Azure/azure-cli#22775](https://github.com/Azure/azure-cli/issues/22775) for background.
 
 ## Install
 ### Install with `go install`
@@ -30,7 +34,24 @@ In addition to supporting environment variables and command line arguments, the 
 See [Configuration options](#configuration-options) for more details
 
 ### Prerequisites
+
+#### Azure resources
 This tool depends on [`az-cli`](https://learn.microsoft.com/en-us/cli/azure/) for authentication. Please ensure that you've authenticated with your Azure tenant by running the command `az login`. A new browser window will open, asking you to authenticate. This should only be necessary to do once.
+
+#### Entra roles and groups
+`az-pim-cli` is an open-source tool and does not provide an app registration. To list/activate Entra roles or groups, you'll need to register an app of your own. Follow the steps under [Creating the `az-pim-cli` app registration in Azure](#creating-the-az-pim-cli-app-registration-in-azure) to get started.
+
+The first `list`/`activate` call for roles or groups opens a device code sign-in in your browser; a token is then cached locally, so this is only needed again once it expires.
+
+##### Switching accounts
+`az-pim-cli login` clears the cached token and runs a fresh device code sign-in, so you can switch which Entra account the Entra role and Entra group commands use.
+
+`az-pim-cli logout` clears the cached token, effectively logging you out.
+
+##### US Gov / China Cloud
+`--cloud usgov`/`--cloud china` (see [Configuration options](#configuration-options)) route Entra role/group sign-in through the matching national-cloud authority (`login.microsoftonline.us`/`login.partner.microsoftonline.cn`) and Graph endpoint (`graph.microsoft.us`/`microsoftgraph.chinacloudapi.cn`).
+
+> :warning: The Graph API calls (list/activate) are unverified - I don't have a US Gov or China tenant to test against. Please open an issue if you hit problems.
 
 ## Usage
 
@@ -47,13 +68,17 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
   list        Query Azure PIM for eligible role assignments
+  login       Sign in for the Entra roles/groups commands, replacing any cached account
+  logout      Clear the cached sign-in used for the Entra roles/groups commands
   version     Display the version of az-pim-cli
 
 Flags:
-      --cloud string    Which Azure environment to use ('global', 'usgov', 'china') (default "global")
-  -c, --config string   config file (default is $HOME/.az-pim-cli.yaml)
-      --debug           Enable debug logging
-  -h, --help            help for az-pim-cli
+      --client-id string   Client ID of your own app registration, required for Entra role/group commands (see README)
+      --cloud string       Which Azure environment to use ('global', 'usgov', 'china') (default "global")
+  -c, --config string      config file (default is $HOME/.az-pim-cli.yaml)
+      --debug              Enable debug logging
+  -h, --help               help for az-pim-cli
+      --tenant-id string   Tenant ID of your own app registration, required for Entra role/group commands (see README)
 
 Use "az-pim-cli [command] --help" for more information about a command.
 
@@ -85,6 +110,8 @@ $ az-pim-cli list resources
 
 #### Groups
 > List [groups](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup)
+>
+> Requires `--client-id`/`--tenant-id` (or config/env) - see [Prerequisites](#entra-roles-and-groups).
 
 ```bash
 $ az-pim-cli list groups
@@ -104,6 +131,8 @@ $ az-pim-cli list groups
 
 #### Entra roles
 > List [entra roles](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadmigratedroles)
+>
+> Requires `--client-id`/`--tenant-id` (or config/env) - see [Prerequisites](#entra-roles-and-groups).
 
 ```bash
 $ az-pim-cli list roles
@@ -115,8 +144,8 @@ $ az-pim-cli list roles
 ```bash
 # List eligible Entra role assignments
 $ az-pim-cli list roles
-== my-entra-id-role ==
-         - Owner
+== Global Reader ==
+         - Global Reader
 ```
 
 </details>
@@ -175,6 +204,8 @@ time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner
 
 #### Groups
 > Activate [groups](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadgroup)
+>
+> Requires `--client-id`/`--tenant-id` (or config/env) - see [Prerequisites](#entra-roles-and-groups).
 
 ```bash
 $ az-pim-cli activate group
@@ -188,15 +219,17 @@ $ az-pim-cli activate group
 ```bash
 # Activate the first matching role for the group 'my-entra-id-group'
 $ az-pim-cli activate group --name my-entra-id-group --duration 5
-time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=my-entra-id-group reason="" ticketNumber="" ticketSystem="" duration=5 startDateTime=""
-time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned subStatus=""
-time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=my-entra-id-group status=Active
+time=2026-08-26T08:08:08.534+02:00 level=INFO msg="Requesting activation" role=Owner scope=my-entra-id-group reason=config ticketNumber="" ticketSystem="" duration=5 startDateTime=2026-08-26T08:08:08+02:00 cloud=global
+time=2026-08-26T08:08:08.900+02:00 level=INFO msg="The role assignment request was successful" status=PendingProvisioning
+time=2026-08-26T08:08:08.900+02:00 level=INFO msg="Request completed" role=Owner scope=my-entra-id-group status=PendingProvisioning
 ```
 
 </details>
 
 #### Entra roles
 > Activate [entra roles](https://portal.azure.com/#view/Microsoft_Azure_PIMCommon/ActivationMenuBlade/~/aadmigratedroles)
+>
+> Requires `--client-id`/`--tenant-id` (or config/env) - see [Prerequisites](#entra-roles-and-groups).
 
 ```bash
 $ az-pim-cli activate role
@@ -207,12 +240,14 @@ $ az-pim-cli activate role
 > :information_source: See examples under [Activate - Azure resources](#azure-resources-1) for additional parameters.
 
 ```bash
-# Activate the first matching role for the Entra role 'my-entra-id-role'
-$ az-pim-cli activate role --name my-entra-id-role --duration 5
-time=2024-11-20T08:08:08.534+01:00 level=INFO msg="Requesting activation" role=Owner scope=my-entra-id-role reason="" ticketNumber="" ticketSystem="" duration=5 startDateTime=""
-time=2024-11-20T08:08:20.129+01:00 level=INFO msg="The role assignment request was successful" status=Provisioned subStatus=""
-time=2024-11-20T08:08:20.129+01:00 level=INFO msg="Request completed" role=Owner scope=my-entra-id-role status=Active
+# Activate the first matching role for the Entra role 'Global Reader'
+$ az-pim-cli activate role --name "Global Reader" --duration 5
+time=2026-08-26T08:08:08.534+02:00 level=INFO msg="Requesting activation" role="Global Reader" scope="Global Reader" reason=config ticketNumber="" ticketSystem="" duration=5 startDateTime=2026-08-26T08:08:08+02:00 cloud=global
+time=2026-08-26T08:08:08.900+02:00 level=INFO msg="The role assignment request was successful" status=Granted
+time=2026-08-26T08:08:08.900+02:00 level=INFO msg="Request completed" role="Global Reader" scope="Global Reader" status=Granted
 ```
+
+> :information_source: `role` and `scope` are the same value for Entra roles.
 
 </details>
 
@@ -229,6 +264,8 @@ ticketSystem: System
 ticketNumber: T-1337
 duration: 5
 cloud: global
+clientId: 00000000-0000-0000-0000-000000000001
+tenantId: 00000000-0000-0000-0000-000000000002
 ```
 
 #### Environment variables
@@ -237,6 +274,8 @@ You may also define these configuration options as environment variables by pref
 ```bash
 export PIM_DURATION=30
 export PIM_CLOUD=global
+export PIM_CLIENTID=00000000-0000-0000-0000-000000000001
+export PIM_TENANTID=00000000-0000-0000-0000-000000000002
 ```
 
 ### Troubleshooting
@@ -262,3 +301,38 @@ $ go test -v ./...
 Want to contribute to the project? There are a few things you need to know.
 
 See [CONTRIBUTING](./CONTRIBUTING.md) to get started
+
+## Creating the `az-pim-cli` app registration in Azure
+
+> You'll need permissions to create App Registrations in your Azure tenant to complete these steps.
+
+1. Create a new App Registration in Azure by following the steps in [Create an App Registration by hand in the Azure Portal](#create-an-app-registration-by-hand-in-the-azure-portal) or [Create an App Registration with the Bicep template](#create-an-app-registration-with-the-bicep-template).
+2. You might need to grant admin consent for these permissions (either yourself, if you're able to, or ask your tenant admin to).
+3. Note the app's **Application (client) ID** and **Directory (tenant) ID** from the **Overview** page. Pass them to `az-pim-cli` via `--client-id`/`--tenant-id` (or the `clientId`/`tenantId` config, or `PIM_CLIENTID`/`PIM_TENANTID` env vars - see [Configuration options](#configuration-options)).
+
+### Create an App Registration by hand in the Azure Portal
+
+1. Create a new app registration in the [Entra admin center's App Registrations page](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade/quickStartType~/null/sourceType/Microsoft_AAD_IAM) or the [Azure Portal's App Registrations page](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
+    - No redirect URI is needed.
+2. Open the new app's **Authentication**, find the **Settings** tab, and enable **Allow public client flows**. Make sure to save your changes.
+3. Open **API permissions**, click **Add a permission** and select **Microsoft Graph**. Choose **Delegated permissions**, and add:
+   - `RoleEligibilitySchedule.Read.Directory`
+   - `RoleAssignmentSchedule.ReadWrite.Directory`
+   - `PrivilegedEligibilitySchedule.Read.AzureADGroup`
+   - `PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup`
+
+### Create an App Registration with the Bicep template
+
+> The App Registration Bicep template uses the [Microsoft Graph Bicep Extension](https://learn.microsoft.com/en-us/community/content/microsoft-graph-bicep-extension). The dynamic version, referenced as `graphV1` in [`graph-app-registration.bicep`](./modules/graph-app-registration.bicep), is defined in [`bicepconfig.json`](./bicepconfig.json).
+>
+> Note that you might need to adjust the `targetScope` in the Bicep template `app-reg.bicep`, depending on your level of access in the tenant.
+
+1. Make sure [`azure-cli`](https://learn.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) is installed
+2. Run the following:
+    ```sh
+    # Authenticate with azure-cli
+    az login --allow-no-subscriptions
+
+    # Create the app registration. See https://learn.microsoft.com/en-us/azure/reliability/regions-list?tabs=all#azure-regions-list-1 for a list of locations. Use the 'Programmatic name'.
+    az deployment sub create --location <location> --template-file app-reg.bicep
+    ```
