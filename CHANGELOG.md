@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0](https://github.com/netr0m/az-pim-cli/compare/v1.16.0...v1.17.0) (2026-10-01)
+
+
+### Features
+
+* **pim:** use graph api with app registration ([#129](https://github.com/netr0m/az-pim-cli/issues/129)) ([bb91bb1](https://github.com/netr0m/az-pim-cli/commit/bb91bb1e67eb732e9bd005be61e839416bec689d))
+
 ## [1.16.0](https://github.com/netr0m/az-pim-cli/compare/v1.15.0...v1.16.0) (2026-08-04)
 
 
