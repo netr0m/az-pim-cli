@@ -8,7 +8,7 @@ It currently supports ['azure resources'](#azure-resources), ['groups'](#groups)
 
 Authentication differs by resource type:
 - **Azure resources** authenticate via your existing `az login` session (`azure.identity`'s `AzureCLICredential`).
-- **Entra roles and groups** authenticate with a Microsoft Entra app registration (device code sign-in) - see [Prerequisites](#prerequisites). You'll need to provide your own Entra app registration to use with this tool. See [Azure/azure-cli#22775](https://github.com/Azure/azure-cli/issues/22775) for background.
+- **Entra roles and groups** authenticate with a Microsoft Entra app registration (browser or device code sign-in) - see [Prerequisites](#prerequisites). You'll need to provide your own Entra app registration to use with this tool. See [Azure/azure-cli#22775](https://github.com/Azure/azure-cli/issues/22775) for background.
 
 ## Install
 ### Install with `go install`
@@ -41,10 +41,13 @@ This tool depends on [`az-cli`](https://learn.microsoft.com/en-us/cli/azure/) fo
 #### Entra roles and groups
 `az-pim-cli` is an open-source tool and does not provide an app registration. To list/activate Entra roles or groups, you'll need to register an app of your own. Follow the steps under [Creating the `az-pim-cli` app registration in Azure](#creating-the-az-pim-cli-app-registration-in-azure) to get started.
 
-The first `list`/`activate` call for roles or groups opens a device code sign-in in your browser; a token is then cached locally, so this is only needed again once it expires.
+The first `list`/`activate` call for roles or groups opens a sign-in in your browser; a token is then cached locally, so this is only needed again once it expires.
+
+##### Sign-in method
+By default, sign-in opens your system browser (`--auth-method browser`). Use `--auth-method devicecode` on machines without a local browser (e.g. over SSH).
 
 ##### Switching accounts
-`az-pim-cli login` clears the cached token and runs a fresh device code sign-in, so you can switch which Entra account the Entra role and Entra group commands use.
+`az-pim-cli login` clears the cached token and runs a fresh sign-in, so you can switch which Entra account the Entra role and Entra group commands use.
 
 `az-pim-cli logout` clears the cached token, effectively logging you out.
 
@@ -73,12 +76,13 @@ Available Commands:
   version     Display the version of az-pim-cli
 
 Flags:
-      --client-id string   Client ID of your own app registration, required for Entra role/group commands (see README)
-      --cloud string       Which Azure environment to use ('global', 'usgov', 'china') (default "global")
-  -c, --config string      config file (default is $HOME/.az-pim-cli.yaml)
-      --debug              Enable debug logging
-  -h, --help               help for az-pim-cli
-      --tenant-id string   Tenant ID of your own app registration, required for Entra role/group commands (see README)
+      --auth-method string   Sign-in method for Entra role/group commands ('browser', 'devicecode') (default "browser")
+      --client-id string     Client ID of your own app registration, required for Entra role/group commands (see README)
+      --cloud string         Which Azure environment to use ('global', 'usgov', 'china') (default "global")
+  -c, --config string        config file (default is $HOME/.az-pim-cli.yaml)
+      --debug                Enable debug logging
+  -h, --help                 help for az-pim-cli
+      --tenant-id string     Tenant ID of your own app registration, required for Entra role/group commands (see README)
 
 Use "az-pim-cli [command] --help" for more information about a command.
 
@@ -266,6 +270,7 @@ duration: 5
 cloud: global
 clientId: 00000000-0000-0000-0000-000000000001
 tenantId: 00000000-0000-0000-0000-000000000002
+authMethod: browser
 ```
 
 #### Environment variables
@@ -276,6 +281,7 @@ export PIM_DURATION=30
 export PIM_CLOUD=global
 export PIM_CLIENTID=00000000-0000-0000-0000-000000000001
 export PIM_TENANTID=00000000-0000-0000-0000-000000000002
+export PIM_AUTHMETHOD=browser
 ```
 
 ### Troubleshooting
@@ -313,8 +319,9 @@ See [CONTRIBUTING](./CONTRIBUTING.md) to get started
 ### Create an App Registration by hand in the Azure Portal
 
 1. Create a new app registration in the [Entra admin center's App Registrations page](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade/quickStartType~/null/sourceType/Microsoft_AAD_IAM) or the [Azure Portal's App Registrations page](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
-    - No redirect URI is needed.
-2. Open the new app's **Authentication**, find the **Settings** tab, and enable **Allow public client flows**. Make sure to save your changes.
+2. Open the new app's **Authentication**:
+    - Click **Add a platform**, choose **Mobile and desktop applications**, and add the custom redirect URI `http://localhost` (used by the default browser sign-in).
+    - Find the **Settings** tab, and enable **Allow public client flows** (used by `--auth-method devicecode`). Make sure to save your changes.
 3. Open **API permissions**, click **Add a permission** and select **Microsoft Graph**. Choose **Delegated permissions**, and add:
    - `RoleEligibilitySchedule.Read.Directory`
    - `RoleAssignmentSchedule.ReadWrite.Directory`

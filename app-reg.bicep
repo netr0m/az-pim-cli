@@ -10,6 +10,12 @@ resource app 'Microsoft.Graph/applications@v1.0' = {
   signInAudience: 'AzureADMyOrg'
   // Allow public client flows
   isFallbackPublicClient: true
+  // Loopback redirect for interactive browser sign-in
+  publicClient: {
+    redirectUris: [
+      'http://localhost'
+    ]
+  }
   requiredResourceAccess: [
 		{
       // Microsoft Graph

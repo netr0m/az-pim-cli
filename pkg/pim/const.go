@@ -34,6 +34,12 @@ const (
 	GRAPH_CN_AUTHORITY_HOST     = "login.partner.microsoftonline.cn"
 )
 
+// Sign-in methods for Entra role/group commands
+const (
+	AUTH_METHOD_BROWSER    = "browser"
+	AUTH_METHOD_DEVICECODE = "devicecode"
+)
+
 // API version for Microsoft Graph
 const GRAPH_API_VERSION string = "v1.0"
 
