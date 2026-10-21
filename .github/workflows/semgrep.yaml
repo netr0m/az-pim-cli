@@ -25,10 +25,10 @@ jobs:
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
     if: (github.actor != 'dependabot[bot]')
     container:
-      image: semgrep/semgrep
+      image: semgrep/semgrep:1.178.0@sha256:32e459968daabe7ab86968184a29109b9564aa00392401156f9788452b42786b
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set semgrep command (Pro if 'SEMGREP_TOKEN' is provided)
         run: |
@@ -51,7 +51,7 @@ jobs:
         run: apk add --no-cache nodejs
 
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: semgrep-scan.sarif
 

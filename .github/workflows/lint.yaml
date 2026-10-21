@@ -25,10 +25,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup go
-        uses: actions/setup-go@v5
+        id: setup-go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
           check-latest: true
@@ -41,14 +42,12 @@ jobs:
         run: echo "py_version=$(python -V | awk -F' ' '{ print $2 }')" >> "$GITHUB_OUTPUT"
 
       - name: Cache pre-commit
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/pre-commit
-          key: pre-commit-${{ steps.get-py-version.outputs.py_version }}-${{ runner.os }}-${{ runner.arch }}
+          key: pre-commit-${{ steps.get-py-version.outputs.py_version }}-go${{ steps.setup-go.outputs.go-version }}-${{ runner.os }}-${{ runner.arch }}
           restore-keys: |
-            pre-commit-${{ steps.get-py-version.outputs.py_version }}-${{ runner.os }}
-            pre-commit-${{ steps.get-py-version.outputs.py_version }}
-            pre-commit
+            pre-commit-${{ steps.get-py-version.outputs.py_version }}-go${{ steps.setup-go.outputs.go-version }}-${{ runner.os }}
 
       - name: Running ${{ matrix.hook }} pre-commit hooks
         run: SKIP="${{ matrix.skip }}" pre-commit run ${{ matrix.hook_id }} --all-files

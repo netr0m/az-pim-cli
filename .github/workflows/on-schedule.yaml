@@ -13,9 +13,11 @@ jobs:
     uses: ./.github/workflows/snyk.yaml
     with:
       severity-treshold: medium
-    secrets: inherit
+    secrets:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   semgrep:
     name: Scan source code
     uses: ./.github/workflows/semgrep.yaml
-    secrets: inherit
+    secrets:
+      SEMGREP_TOKEN: ${{ secrets.SEMGREP_TOKEN }}
