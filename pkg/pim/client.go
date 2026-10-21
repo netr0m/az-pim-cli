@@ -40,6 +40,7 @@ type AzureClient struct {
 	GraphAuthorityHost string
 	ClientID           string
 	TenantID           string
+	AuthMethod         string
 }
 
 // Implementation of the GetAccessToken call
@@ -91,7 +92,7 @@ func (c AzureClient) GetGraphAccessToken(scopes []string) string {
 		os.Exit(1)
 	}
 
-	token, err := acquireGraphToken(c.ClientID, c.TenantID, scopes, cachePath, c.GraphAuthorityHost)
+	token, err := acquireGraphToken(c.ClientID, c.TenantID, scopes, cachePath, c.GraphAuthorityHost, c.AuthMethod)
 	if err != nil {
 		_error := common.Error{
 			Operation: "GetGraphAccessToken",

@@ -21,6 +21,7 @@ var (
 	azureEnv            string
 	clientID            string
 	tenantID            string
+	authMethod          string
 	AzureClientInstance pim.AzureClient
 )
 
@@ -45,12 +46,17 @@ var rootCmd = &cobra.Command{
 			fmt.Printf("Invalid value for --cloud: %q (allowed: global, usgov, china)\n", azureEnv)
 			os.Exit(1)
 		}
+		if authMethod != pim.AUTH_METHOD_BROWSER && authMethod != pim.AUTH_METHOD_DEVICECODE {
+			fmt.Printf("Invalid value for --auth-method: %q (allowed: browser, devicecode)\n", authMethod)
+			os.Exit(1)
+		}
 		AzureClientInstance = pim.AzureClient{
 			ARMBaseURL:         armBaseURL,
 			GraphBaseURL:       graphBaseURL,
 			GraphAuthorityHost: graphAuthorityHost,
 			ClientID:           clientID,
 			TenantID:           tenantID,
+			AuthMethod:         authMethod,
 		}
 	},
 }
@@ -73,6 +79,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&azureEnv, "cloud", "global", "Which Azure environment to use ('global', 'usgov', 'china')")
 	rootCmd.PersistentFlags().StringVar(&clientID, "client-id", "", "Client ID of your own app registration, required for Entra role/group commands (see README)")
 	rootCmd.PersistentFlags().StringVar(&tenantID, "tenant-id", "", "Tenant ID of your own app registration, required for Entra role/group commands (see README)")
+	rootCmd.PersistentFlags().StringVar(&authMethod, "auth-method", pim.AUTH_METHOD_BROWSER, "Sign-in method for Entra role/group commands ('browser', 'devicecode')")
 }
 
 // initConfig reads in config file and ENV variables if set.
