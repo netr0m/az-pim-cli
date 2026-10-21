@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.18.0](https://github.com/netr0m/az-pim-cli/compare/v1.17.0...v1.18.0) (2026-10-21)
+
+
+### Features
+
+* **msal:** add browser-based auth as main auth method ([#134](https://github.com/netr0m/az-pim-cli/issues/134)) ([371f77a](https://github.com/netr0m/az-pim-cli/commit/371f77a129629b743d6e032ba2d2889ad0d87024))
+
+
+### Chores
+
+* upgrades and workflow security improvements ([#131](https://github.com/netr0m/az-pim-cli/issues/131)) ([ea6a577](https://github.com/netr0m/az-pim-cli/commit/ea6a577fb53d0d9fa56df45663eb0c6584c06f59))
+
+
+### Continuous Integration
+
+* bump webiny/action-conventional-commits from 1.3.0 to 1.4.2 ([#133](https://github.com/netr0m/az-pim-cli/issues/133)) ([09d1fc0](https://github.com/netr0m/az-pim-cli/commit/09d1fc07cd654aaba0076ad6c6c3b3f193fa7457))
+
 ## [1.17.0](https://github.com/netr0m/az-pim-cli/compare/v1.16.0...v1.17.0) (2026-10-01)
 
 
