@@ -67,7 +67,7 @@ func ClearGraphTokenCache() error {
 	return nil
 }
 
-func acquireGraphToken(clientID, tenantID string, scopes []string, cachePath, authorityHost string) (string, error) {
+func acquireGraphToken(clientID, tenantID string, scopes []string, cachePath, authorityHost, authMethod string) (string, error) {
 	client, err := public.New(
 		clientID,
 		public.WithAuthority(fmt.Sprintf("https://%s/%s", authorityHost, tenantID)),
@@ -84,6 +84,14 @@ func acquireGraphToken(clientID, tenantID string, scopes []string, cachePath, au
 		if err == nil {
 			return result.AccessToken, nil
 		}
+	}
+
+	if authMethod == AUTH_METHOD_BROWSER {
+		result, err := client.AcquireTokenInteractive(ctx, scopes, public.WithRedirectURI("http://localhost"))
+		if err != nil {
+			return "", fmt.Errorf("failed to complete browser login: %w", err)
+		}
+		return result.AccessToken, nil
 	}
 
 	deviceCode, err := client.AcquireTokenByDeviceCode(ctx, scopes)
